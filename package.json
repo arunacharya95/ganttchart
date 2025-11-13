@@ -1,0 +1,57 @@
+{
+  "name": "gantt-react-arunacharya95",
+  "version": "1.2.1",
+  "description": "A professional React Gantt chart component library with Material-UI",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --declarationDir dist",
+    "dev": "vite",
+    "test": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arunacharya95/ganttchart.git"
+  },
+  "keywords": [
+    "react",
+    "gantt",
+    "chart",
+    "mui",
+    "material-ui",
+    "timeline",
+    "project-management"
+  ],
+  "author": "Your Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "@mui/material": "^5.0.0 || ^6.0.0 || ^7.0.0",
+    "@emotion/react": "^11.0.0",
+    "@emotion/styled": "^11.0.0"
+  },
+  "dependencies": {
+    "date-fns": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "@mui/material": "^5.15.0",
+    "@emotion/react": "^11.11.0",
+    "@emotion/styled": "^11.11.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.3.0",
+    "jsdom": "^24.0.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.0.0"
+  }
+}
