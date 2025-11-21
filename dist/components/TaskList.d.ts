@@ -1,8 +1,9 @@
 import React from 'react';
-import { TaskType } from '../types';
+import { FlattenedTask } from '../types';
 type TaskListProps = {
-    tasks: TaskType[];
+    tasks: FlattenedTask[];
     rowHeight: number;
+    onToggleExpand?: (taskId: string | number) => void;
 };
 declare const TaskList: React.FC<TaskListProps>;
 export default TaskList;

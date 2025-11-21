@@ -9,7 +9,7 @@ import {
   isSameDay,
   isWeekend as dateFnsIsWeekend,
 } from 'date-fns';
-import type { GanttTask, TaskStatus, DateRange } from './types';
+import type { GanttTask, TaskStatus, DateRange, FlattenedTask } from './types';
 
 /**
  * Default configuration values
@@ -396,5 +396,146 @@ export const transformFromGanttTask = (taskId: string | number, updates: Partial
   if (updates.assignedTo !== undefined) apiUpdates.assignees = [updates.assignedTo];
 
   return apiUpdates;
+};
+
+/**
+ * Flatten hierarchical task structure for rendering
+ * Converts nested tasks with subtasks into a flat array with level metadata
+ */
+export const flattenTasks = (tasks: GanttTask[], expandedTaskIds: Set<string | number> = new Set()): FlattenedTask[] => {
+  const flattened: FlattenedTask[] = [];
+  
+  const flatten = (task: GanttTask, level: number = 0, parentExpanded: boolean = true) => {
+    const hasChildren = !!task.subtasks && task.subtasks.length > 0;
+    const isExpanded = task.isExpanded ?? expandedTaskIds.has(task.id);
+    const isVisible = level === 0 || parentExpanded;
+    
+    flattened.push({
+      ...task,
+      level,
+      hasChildren,
+      isVisible,
+      isExpanded
+    });
+    
+    // Recursively flatten subtasks if parent is expanded
+    if (hasChildren && isExpanded && isVisible) {
+      task.subtasks!.forEach(subtask => {
+        flatten(subtask, level + 1, true);
+      });
+    }
+  };
+  
+  tasks.forEach(task => flatten(task));
+  return flattened.filter(task => task.isVisible);
+};
+
+/**
+ * Toggle task expansion state
+ */
+export const toggleTaskExpansion = (
+  taskId: string | number,
+  expandedTaskIds: Set<string | number>
+): Set<string | number> => {
+  const newSet = new Set(expandedTaskIds);
+  if (newSet.has(taskId)) {
+    newSet.delete(taskId);
+  } else {
+    newSet.add(taskId);
+  }
+  return newSet;
+};
+
+/**
+ * Get all parent task IDs for creating a parent selection list
+ */
+export const getParentTaskOptions = (tasks: GanttTask[], excludeTaskId?: string | number): GanttTask[] => {
+  const options: GanttTask[] = [];
+  
+  const collectTasks = (taskList: GanttTask[]) => {
+    taskList.forEach(task => {
+      if (task.id !== excludeTaskId) {
+        options.push(task);
+        if (task.subtasks && task.subtasks.length > 0) {
+          collectTasks(task.subtasks);
+        }
+      }
+    });
+  };
+  
+  collectTasks(tasks);
+  return options;
+};
+
+/**
+ * Find a task by ID in hierarchical structure
+ */
+export const findTaskById = (tasks: GanttTask[], taskId: string | number): GanttTask | null => {
+  for (const task of tasks) {
+    if (task.id === taskId) {
+      return task;
+    }
+    if (task.subtasks && task.subtasks.length > 0) {
+      const found = findTaskById(task.subtasks, taskId);
+      if (found) return found;
+    }
+  }
+  return null;
+};
+
+/**
+ * Update a task in hierarchical structure (immutable)
+ */
+export const updateTaskInHierarchy = (
+  tasks: GanttTask[],
+  taskId: string | number,
+  updates: Partial<GanttTask>
+): GanttTask[] => {
+  return tasks.map(task => {
+    if (task.id === taskId) {
+      return { ...task, ...updates };
+    }
+    if (task.subtasks && task.subtasks.length > 0) {
+      return {
+        ...task,
+        subtasks: updateTaskInHierarchy(task.subtasks, taskId, updates)
+      };
+    }
+    return task;
+  });
+};
+
+/**
+ * Add a subtask to a parent task
+ */
+export const addSubtask = (
+  tasks: GanttTask[],
+  parentId: string | number,
+  subtask: GanttTask
+): GanttTask[] => {
+  return tasks.map(task => {
+    if (task.id === parentId) {
+      const subtasks = task.subtasks || [];
+      return {
+        ...task,
+        subtasks: [...subtasks, { ...subtask, parentId }],
+        isExpanded: true // Auto-expand when adding subtask
+      };
+    }
+    if (task.subtasks && task.subtasks.length > 0) {
+      return {
+        ...task,
+        subtasks: addSubtask(task.subtasks, parentId, subtask)
+      };
+    }
+    return task;
+  });
+};
+
+/**
+ * Calculate indentation for hierarchical display
+ */
+export const getIndentation = (level: number, indentSize: number = 20): number => {
+  return level * indentSize;
 };
 

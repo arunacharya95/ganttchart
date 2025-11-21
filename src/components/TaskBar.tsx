@@ -1,9 +1,10 @@
 import React, { useState, useRef } from 'react'
-import { TaskType } from '../types'
+import { TaskType, GanttConfig, FlattenedTask } from '../types'
 import { calculateTaskPosition } from '../utils'
+import { COLOR_PALETTES, getProgressColor } from '../colorPalettes'
 
 type TaskBarProps = {
-  task: TaskType
+  task: TaskType | FlattenedTask
   timelineStart: Date
   timelineEnd: Date
   chartWidth: number
@@ -12,6 +13,8 @@ type TaskBarProps = {
   onTaskUpdate?: (taskId: string, updates: Partial<TaskType>) => void
   onClick?: (task: TaskType) => void
   onDoubleClick?: (task: TaskType) => void
+  getTaskColor?: (task: TaskType) => string
+  config?: GanttConfig
 }
 
 const TaskBar: React.FC<TaskBarProps> = ({ 
@@ -23,10 +26,69 @@ const TaskBar: React.FC<TaskBarProps> = ({
   index,
   onTaskUpdate,
   onClick,
-  onDoubleClick
+  onDoubleClick,
+  getTaskColor,
+  config
 }) => {
   const { left, width } = calculateTaskPosition(task, timelineStart, timelineEnd, chartWidth)
   const progress = task.progress || 0
+  
+  // Determine task bar color
+  const getBarColor = (): string => {
+    // Priority 1: Use task's explicit color property
+    if (task.color) {
+      return task.color
+    }
+    
+    // Priority 2: Use custom getTaskColor function if provided
+    if (getTaskColor) {
+      return getTaskColor(task)
+    }
+    
+    // Priority 3: Check config for color mappings
+    if (config) {
+      // Check statusColors mapping
+      if (config.statusColors && task.status && config.statusColors[task.status]) {
+        return config.statusColors[task.status]
+      }
+      
+      // Check assigneeColors mapping
+      if (config.assigneeColors && task.assignedTo && config.assigneeColors[task.assignedTo]) {
+        return config.assigneeColors[task.assignedTo]
+      }
+      
+      // Check colorPalette configuration
+      if (config.colorPalette) {
+        const palette = config.colorPalette
+        
+        // Use custom colors if provided
+        if (palette.colors && palette.colors.length > 0) {
+          return palette.colors[index % palette.colors.length]
+        }
+        
+        // Use progress-specific colors if provided
+        if (progress === 100 && palette.completed) return palette.completed
+        if (progress > 0 && palette.inProgress) return palette.inProgress
+        if (progress === 0 && palette.notStarted) return palette.notStarted
+        
+        // Use preset palette
+        if (palette.preset) {
+          return getProgressColor(palette.preset, progress)
+        }
+      }
+    }
+    
+    // Priority 4: Default color based on progress
+    if (progress === 100) {
+      return '#10b981' // green for completed
+    } else if (progress > 0) {
+      return '#3b82f6' // blue for in progress
+    } else {
+      return '#6b7280' // gray for not started
+    }
+  }
+  
+  const taskColor = getBarColor()
   
   const [isDragging, setIsDragging] = useState(false)
   const [isResizingLeft, setIsResizingLeft] = useState(false)
@@ -180,20 +242,24 @@ const TaskBar: React.FC<TaskBarProps> = ({
   const currentLeft = isDragging || isResizingLeft || isResizingRight ? tempPosition.left : left
   const currentWidth = isDragging || isResizingLeft || isResizingRight ? tempPosition.width : width
 
+  // Check if this is a subtask (has level property and level > 0)
+  const isSubtask = 'level' in task && task.level > 0
+  const hasChildren = 'hasChildren' in task && task.hasChildren
+
   const barStyle: React.CSSProperties = {
     position: 'absolute',
     left: `${currentLeft}px`,
     top: `${index * rowHeight + 10}px`,
     width: `${currentWidth}px`,
     height: `${rowHeight - 20}px`,
-    backgroundColor: '#3b82f6',
+    backgroundColor: taskColor,
     borderRadius: '4px',
     display: 'flex',
     alignItems: 'center',
     padding: '0 8px',
     color: '#fff',
     fontSize: '12px',
-    fontWeight: 500,
+    fontWeight: hasChildren ? 600 : 500,
     overflow: 'hidden',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
@@ -202,7 +268,9 @@ const TaskBar: React.FC<TaskBarProps> = ({
       ? '0 4px 6px rgba(0,0,0,0.3)' 
       : '0 1px 3px rgba(0,0,0,0.2)',
     transition: isDragging || isResizingLeft || isResizingRight ? 'none' : 'transform 0.1s',
-    userSelect: 'none'
+    userSelect: 'none',
+    opacity: isSubtask ? 0.9 : 1,
+    border: hasChildren ? '2px solid rgba(255,255,255,0.3)' : 'none'
   }
 
   const progressStyle: React.CSSProperties = {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { Task } from '../types'
+import { Task, GanttTask } from '../types'
+import { getParentTaskOptions } from '../utils'
 
 type TaskModalProps = {
   isOpen: boolean
@@ -7,6 +8,7 @@ type TaskModalProps = {
   onSave: (task: Omit<Task, 'id'> | Task) => void
   initialDate?: string
   editingTask?: Task | null
+  allTasks?: GanttTask[]
 }
 
 export const TaskModal: React.FC<TaskModalProps> = ({ 
@@ -14,14 +16,16 @@ export const TaskModal: React.FC<TaskModalProps> = ({
   onClose, 
   onSave, 
   initialDate,
-  editingTask 
+  editingTask,
+  allTasks = []
 }) => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     startDate: initialDate || new Date().toISOString().split('T')[0],
     endDate: initialDate || new Date().toISOString().split('T')[0],
-    progress: 0
+    progress: 0,
+    parentId: null as string | number | null
   })
 
   useEffect(() => {
@@ -31,7 +35,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         description: (editingTask as any).description || '',
         startDate: editingTask.startDate,
         endDate: editingTask.endDate,
-        progress: editingTask.progress || 0
+        progress: editingTask.progress || 0,
+        parentId: (editingTask as any).parentId || null
       })
     } else if (isOpen) {
       setFormData({
@@ -39,7 +44,8 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         description: '',
         startDate: initialDate || new Date().toISOString().split('T')[0],
         endDate: initialDate || new Date().toISOString().split('T')[0],
-        progress: 0
+        progress: 0,
+        parentId: null
       })
     }
   }, [editingTask, isOpen, initialDate])
@@ -56,15 +62,18 @@ export const TaskModal: React.FC<TaskModalProps> = ({
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : value
+      [name]: type === 'number' ? Number(value) : (name === 'parentId' ? (value === '' ? null : value) : value)
     }))
   }
 
   if (!isOpen) return null
+
+  // Get available parent tasks (excluding the task being edited to prevent circular references)
+  const parentTaskOptions = getParentTaskOptions(allTasks, editingTask?.id)
 
   return (
     <div style={{
@@ -135,6 +144,36 @@ export const TaskModal: React.FC<TaskModalProps> = ({
                 resize: 'vertical'
               }}
             />
+          </div>
+
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+              Parent Task (Optional)
+            </label>
+            <select
+              name="parentId"
+              value={formData.parentId || ''}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+                backgroundColor: '#fff'
+              }}
+            >
+              <option value="">None (Top-level task)</option>
+              {parentTaskOptions.map(task => (
+                <option key={task.id} value={task.id}>
+                  {task.name}
+                </option>
+              ))}
+            </select>
+            <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+              Select a parent task to make this a subtask
+            </p>
           </div>
 
           <div style={{ marginBottom: '16px' }}>

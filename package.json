@@ -1,7 +1,7 @@
 {
   "name": "gantt-react-arunacharya95",
-  "version": "1.2.1",
-  "description": "A professional React Gantt chart component library with Material-UI",
+  "version": "1.4.0",
+  "description": "A professional React Gantt chart component library with hierarchical tasks, subtasks, and customizable color palettes",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
@@ -24,7 +24,10 @@
     "mui",
     "material-ui",
     "timeline",
-    "project-management"
+    "project-management",
+    "subtasks",
+    "hierarchical-tasks",
+    "task-management"
   ],
   "author": "Your Team",
   "license": "MIT",

@@ -1,203 +1,396 @@
-import { jsx as s, jsxs as w, Fragment as te } from "react/jsx-runtime";
-import q, { useState as z, useRef as $, useEffect as ne, useMemo as J } from "react";
-import { differenceInDays as K } from "date-fns";
-function oe(o, t, r, a) {
-  if (a !== void 0 && r instanceof Date) {
-    const D = o, h = r, l = new Date(D.startDate || D.start), p = new Date(D.endDate || D.end), T = (H) => {
-      const L = new Date(H);
-      return L.setHours(0, 0, 0, 0), L;
-    }, c = T(t), v = T(l), x = T(p), M = 24 * 60 * 60 * 1e3, m = Math.round((v.getTime() - c.getTime()) / M), C = Math.round((x.getTime() - v.getTime()) / M) + 1, E = Math.round((h.getTime() - c.getTime()) / M) + 1, I = a / E, b = m * I, k = C * I;
-    return { left: b, width: Math.max(k, I) };
+import { jsx as a, jsxs as x, Fragment as ie } from "react/jsx-runtime";
+import ee, { useState as z, useRef as B, useEffect as de, useMemo as te } from "react";
+import { differenceInDays as oe } from "date-fns";
+function ce(n, t, o, s) {
+  if (s !== void 0 && o instanceof Date) {
+    const g = n, D = o, w = new Date(g.startDate || g.start), S = new Date(g.endDate || g.end), i = (E) => {
+      const M = new Date(E);
+      return M.setHours(0, 0, 0, 0), M;
+    }, p = i(t), u = i(w), O = i(S), I = 24 * 60 * 60 * 1e3, b = Math.round((u.getTime() - p.getTime()) / I), H = Math.round((O.getTime() - u.getTime()) / I) + 1, y = Math.round((D.getTime() - p.getTime()) / I) + 1, R = s / y, m = b * R, $ = H * R;
+    return { left: m, width: Math.max($, R) };
   }
-  const n = o, f = r;
-  return K(n, t) * f;
+  const r = n, c = o;
+  return oe(r, t) * c;
 }
-const re = (o, t) => K(t, o), se = (o) => {
-  if (o.length === 0) {
-    const n = /* @__PURE__ */ new Date();
-    n.setHours(0, 0, 0, 0);
-    const f = new Date(n);
-    return f.setDate(f.getDate() + 7), { start: n, end: f };
+const fe = (n, t) => oe(t, n), pe = (n) => {
+  if (n.length === 0) {
+    const r = /* @__PURE__ */ new Date();
+    r.setHours(0, 0, 0, 0);
+    const c = new Date(r);
+    return c.setDate(c.getDate() + 7), { start: r, end: c };
   }
-  const t = o.flatMap((n) => [
-    new Date(n.startDate || n.start),
-    new Date(n.endDate || n.end)
-  ]), r = new Date(Math.min(...t.map((n) => n.getTime()))), a = new Date(Math.max(...t.map((n) => n.getTime())));
-  return r.setHours(0, 0, 0, 0), a.setHours(0, 0, 0, 0), { start: r, end: a };
-}, ie = (o, t, r) => {
-  const a = [], n = new Date(o);
-  for (n.setHours(0, 0, 0, 0); n <= t; ) {
-    const f = new Date(n);
-    let u, D;
-    if (r === "day")
-      D = n.toLocaleDateString("en-US", { month: "short", day: "numeric" }), u = new Date(n), u.setDate(u.getDate() + 1);
-    else if (r === "week") {
-      const h = new Date(n);
-      h.setDate(h.getDate() + 7), D = `Week ${Math.ceil((n.getTime() - new Date(n.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1e3))}`, u = h;
+  const t = n.flatMap((r) => [
+    new Date(r.startDate || r.start),
+    new Date(r.endDate || r.end)
+  ]), o = new Date(Math.min(...t.map((r) => r.getTime()))), s = new Date(Math.max(...t.map((r) => r.getTime())));
+  return o.setHours(0, 0, 0, 0), s.setHours(0, 0, 0, 0), { start: o, end: s };
+}, ge = (n, t, o) => {
+  const s = [], r = new Date(n);
+  for (r.setHours(0, 0, 0, 0); r <= t; ) {
+    const c = new Date(r);
+    let d, g;
+    if (o === "day")
+      g = r.toLocaleDateString("en-US", { month: "short", day: "numeric" }), d = new Date(r), d.setDate(d.getDate() + 1);
+    else if (o === "week") {
+      const D = new Date(r);
+      D.setDate(D.getDate() + 7), g = `Week ${Math.ceil((r.getTime() - new Date(r.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1e3))}`, d = D;
     } else
-      D = n.toLocaleDateString("en-US", { month: "short", year: "numeric" }), u = new Date(n.getFullYear(), n.getMonth() + 1, 1);
-    a.push({ label: D, startDate: f, endDate: u }), r === "day" ? n.setDate(n.getDate() + 1) : r === "week" ? n.setDate(n.getDate() + 7) : n.setMonth(n.getMonth() + 1);
+      g = r.toLocaleDateString("en-US", { month: "short", year: "numeric" }), d = new Date(r.getFullYear(), r.getMonth() + 1, 1);
+    s.push({ label: g, startDate: c, endDate: d }), o === "day" ? r.setDate(r.getDate() + 1) : o === "week" ? r.setDate(r.getDate() + 7) : r.setMonth(r.getMonth() + 1);
   }
-  return a;
-}, ue = (o) => o.map((t) => {
-  let r = 0;
-  t.progress && (typeof t.progress == "string" ? r = parseInt(t.progress.replace("%", "")) : typeof t.progress == "number" && (r = t.progress));
-  let a = "Not Started";
-  return r === 100 ? a = "Done" : r > 0 && (a = "In Progress"), {
+  return s;
+}, Ee = (n) => n.map((t) => {
+  let o = 0;
+  t.progress && (typeof t.progress == "string" ? o = parseInt(t.progress.replace("%", "")) : typeof t.progress == "number" && (o = t.progress));
+  let s = "Not Started";
+  return o === 100 ? s = "Done" : o > 0 && (s = "In Progress"), {
     // Map API fields to GanttTask format
     id: t._id || t.id,
     name: t.title || t.name,
     start: t.startDate || t.start,
     end: t.endDate || t.end,
-    status: a,
-    progress: r,
+    status: s,
+    progress: o,
     assignedTo: Array.isArray(t.assignees) ? t.assignees[0] : t.assignedTo,
     // Preserve original data for reference
     _original: t
   };
-}), he = (o, t) => {
-  const r = {};
-  return t.name !== void 0 && (r.title = t.name), t.start !== void 0 && (r.startDate = t.start), t.end !== void 0 && (r.endDate = t.end), t.progress !== void 0 && (r.progress = `${t.progress}%`), t.assignedTo !== void 0 && (r.assignees = [t.assignedTo]), r;
-}, ae = ({ units: o, chartWidth: t, unitWidth: r }) => /* @__PURE__ */ s("div", { style: {
+}), Me = (n, t) => {
+  const o = {};
+  return t.name !== void 0 && (o.title = t.name), t.start !== void 0 && (o.startDate = t.start), t.end !== void 0 && (o.endDate = t.end), t.progress !== void 0 && (o.progress = `${t.progress}%`), t.assignedTo !== void 0 && (o.assignees = [t.assignedTo]), o;
+}, ue = (n, t = /* @__PURE__ */ new Set()) => {
+  const o = [], s = (r, c = 0, d = !0) => {
+    const g = !!r.subtasks && r.subtasks.length > 0, D = r.isExpanded ?? t.has(r.id), w = c === 0 || d;
+    o.push({
+      ...r,
+      level: c,
+      hasChildren: g,
+      isVisible: w,
+      isExpanded: D
+    }), g && D && w && r.subtasks.forEach((S) => {
+      s(S, c + 1, !0);
+    });
+  };
+  return n.forEach((r) => s(r)), o.filter((r) => r.isVisible);
+}, he = (n, t) => {
+  const o = new Set(t);
+  return o.has(n) ? o.delete(n) : o.add(n), o;
+}, be = (n, t) => {
+  const o = [], s = (r) => {
+    r.forEach((c) => {
+      c.id !== t && (o.push(c), c.subtasks && c.subtasks.length > 0 && s(c.subtasks));
+    });
+  };
+  return s(n), o;
+}, xe = (n, t) => {
+  for (const o of n) {
+    if (o.id === t)
+      return o;
+    if (o.subtasks && o.subtasks.length > 0) {
+      const s = xe(o.subtasks, t);
+      if (s) return s;
+    }
+  }
+  return null;
+}, me = (n, t, o) => n.map((s) => s.id === t ? { ...s, ...o } : s.subtasks && s.subtasks.length > 0 ? {
+  ...s,
+  subtasks: me(s.subtasks, t, o)
+} : s), De = (n, t, o) => n.map((s) => {
+  if (s.id === t) {
+    const r = s.subtasks || [];
+    return {
+      ...s,
+      subtasks: [...r, { ...o, parentId: t }],
+      isExpanded: !0
+      // Auto-expand when adding subtask
+    };
+  }
+  return s.subtasks && s.subtasks.length > 0 ? {
+    ...s,
+    subtasks: De(s.subtasks, t, o)
+  } : s;
+}), Se = (n, t = 20) => n * t, ye = ({ units: n, chartWidth: t, unitWidth: o }) => /* @__PURE__ */ a("div", { style: {
   display: "flex",
   borderBottom: "2px solid #e5e7eb",
   backgroundColor: "#f9fafb",
   height: "60px"
-}, children: o.map((a, n) => /* @__PURE__ */ s(
+}, children: n.map((s, r) => /* @__PURE__ */ a(
   "div",
   {
     style: {
-      width: `${r}px`,
-      minWidth: `${r}px`,
-      maxWidth: `${r}px`,
+      width: `${o}px`,
+      minWidth: `${o}px`,
+      maxWidth: `${o}px`,
       padding: "8px 4px",
       textAlign: "center",
       fontSize: "12px",
       fontWeight: 600,
       color: "#374151",
-      borderRight: n < o.length - 1 ? "1px solid #e5e7eb" : "none",
+      borderRight: r < n.length - 1 ? "1px solid #e5e7eb" : "none",
       boxSizing: "border-box",
       display: "flex",
       alignItems: "center",
       justifyContent: "center"
     },
-    children: a.label
+    children: s.label
   },
-  n
-)) }), le = ({ tasks: o, rowHeight: t }) => /* @__PURE__ */ s("div", { children: o.map((r, a) => /* @__PURE__ */ w(
-  "div",
-  {
-    style: {
-      height: `${t}px`,
-      padding: "0 12px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      borderBottom: "1px solid #f3f4f6",
-      fontSize: "14px",
-      color: "#111827"
+  r
+)) }), we = ({ tasks: n, rowHeight: t, onToggleExpand: o }) => /* @__PURE__ */ a("div", { children: n.map((s, r) => {
+  const c = Se(s.level);
+  return /* @__PURE__ */ x(
+    "div",
+    {
+      style: {
+        height: `${t}px`,
+        padding: "0 12px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        borderBottom: "1px solid #f3f4f6",
+        fontSize: "14px",
+        color: "#111827",
+        backgroundColor: s.level > 0 ? "#f9fafb" : "#fff"
+      },
+      children: [
+        /* @__PURE__ */ x("div", { style: {
+          display: "flex",
+          alignItems: "center",
+          flex: 1,
+          paddingLeft: `${c}px`
+        }, children: [
+          s.hasChildren && /* @__PURE__ */ a(
+            "button",
+            {
+              onClick: () => o == null ? void 0 : o(s.id),
+              style: {
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                padding: "4px",
+                marginRight: "8px",
+                display: "flex",
+                alignItems: "center",
+                fontSize: "16px",
+                color: "#6b7280"
+              },
+              title: s.isExpanded ? "Collapse" : "Expand",
+              children: s.isExpanded ? "▼" : "▶"
+            }
+          ),
+          !s.hasChildren && /* @__PURE__ */ a("span", { style: { width: "28px", display: "inline-block" } }),
+          /* @__PURE__ */ a("span", { style: {
+            fontWeight: s.hasChildren ? 600 : 500,
+            color: s.hasChildren ? "#111827" : "#374151"
+          }, children: s.name })
+        ] }),
+        /* @__PURE__ */ x("span", { style: { fontSize: "12px", color: "#6b7280", marginLeft: "8px" }, children: [
+          fe(new Date(s.start || s.startDate), new Date(s.end || s.endDate)),
+          "d"
+        ] })
+      ]
     },
-    children: [
-      /* @__PURE__ */ s("span", { style: { fontWeight: 500 }, children: r.name }),
-      /* @__PURE__ */ w("span", { style: { fontSize: "12px", color: "#6b7280" }, children: [
-        re(new Date(r.start || r.startDate), new Date(r.end || r.endDate)),
-        "d"
-      ] })
-    ]
+    s.id
+  );
+}) }), re = {
+  default: {
+    completed: "#10b981",
+    // Green
+    inProgress: "#3b82f6",
+    // Blue
+    notStarted: "#6b7280",
+    // Gray
+    colors: ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"]
   },
-  r.id
-)) }), de = ({
-  task: o,
+  vivid: {
+    completed: "#22c55e",
+    // Bright Green
+    inProgress: "#3b82f6",
+    // Bright Blue
+    notStarted: "#94a3b8",
+    // Light Gray
+    colors: ["#ef4444", "#f97316", "#f59e0b", "#84cc16", "#22c55e", "#14b8a6", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#d946ef", "#ec4899"]
+  },
+  pastel: {
+    completed: "#86efac",
+    // Pastel Green
+    inProgress: "#93c5fd",
+    // Pastel Blue
+    notStarted: "#cbd5e1",
+    // Pastel Gray
+    colors: ["#fca5a5", "#fdba74", "#fcd34d", "#bef264", "#86efac", "#5eead4", "#67e8f9", "#93c5fd", "#a5b4fc", "#c4b5fd", "#f0abfc", "#f9a8d4"]
+  },
+  warm: {
+    completed: "#fb923c",
+    // Orange
+    inProgress: "#f59e0b",
+    // Amber
+    notStarted: "#a8a29e",
+    // Warm Gray
+    colors: ["#dc2626", "#ea580c", "#f59e0b", "#facc15", "#fb923c", "#f87171", "#fbbf24", "#fde047"]
+  },
+  cool: {
+    completed: "#06b6d4",
+    // Cyan
+    inProgress: "#0ea5e9",
+    // Sky Blue
+    notStarted: "#94a3b8",
+    // Cool Gray
+    colors: ["#06b6d4", "#0ea5e9", "#3b82f6", "#6366f1", "#8b5cf6", "#0891b2", "#0284c7", "#2563eb"]
+  },
+  earth: {
+    completed: "#84cc16",
+    // Lime
+    inProgress: "#a3e635",
+    // Light Lime
+    notStarted: "#a8a29e",
+    // Stone
+    colors: ["#78716c", "#a3e635", "#84cc16", "#65a30d", "#facc15", "#eab308", "#ca8a04", "#92400e"]
+  },
+  ocean: {
+    completed: "#14b8a6",
+    // Teal
+    inProgress: "#06b6d4",
+    // Cyan
+    notStarted: "#64748b",
+    // Slate
+    colors: ["#0891b2", "#06b6d4", "#0ea5e9", "#0284c7", "#14b8a6", "#2dd4bf", "#22d3ee", "#38bdf8"]
+  },
+  forest: {
+    completed: "#22c55e",
+    // Green
+    inProgress: "#10b981",
+    // Emerald
+    notStarted: "#78716c",
+    // Stone
+    colors: ["#15803d", "#16a34a", "#22c55e", "#10b981", "#059669", "#84cc16", "#65a30d", "#4d7c0f"]
+  }
+};
+function We(n, t) {
+  const o = re[n];
+  return o.colors[t % o.colors.length];
+}
+function Te(n, t) {
+  const o = re[n];
+  return t === 100 ? o.completed : t > 0 ? o.inProgress : o.notStarted;
+}
+const ve = ({
+  task: n,
   timelineStart: t,
-  timelineEnd: r,
-  chartWidth: a,
-  rowHeight: n,
-  index: f,
-  onTaskUpdate: u,
-  onClick: D,
-  onDoubleClick: h
+  timelineEnd: o,
+  chartWidth: s,
+  rowHeight: r,
+  index: c,
+  onTaskUpdate: d,
+  onClick: g,
+  onDoubleClick: D,
+  getTaskColor: w,
+  config: S
 }) => {
-  const { left: l, width: p } = oe(o, t, r, a), T = o.progress || 0, [c, v] = z(!1), [x, M] = z(!1), [m, C] = z(!1), [E, I] = z({ x: 0, y: 0 }), [b, k] = z({ left: l, width: p }), [H, L] = z(0), [_, B] = z(!1), R = $({ left: l, width: p }), O = $(null), N = $({ left: l, width: p });
-  q.useEffect(() => {
-    const e = document.querySelector("[data-gantt-chart-scroll]");
-    e && (O.current = e);
-  }, []);
-  const U = (e, y) => {
-    var d;
-    e.stopPropagation(), e.preventDefault();
-    const g = ((d = O.current) == null ? void 0 : d.scrollLeft) || 0;
-    B(!1), y === "move" ? (v(!0), L(e.clientX), I({ x: e.clientX - l + g, y: 0 })) : y === "resize-left" ? (M(!0), L(e.clientX)) : y === "resize-right" && (C(!0), L(e.clientX)), R.current = { left: l, width: p };
-  }, G = (e) => {
-    e.stopPropagation(), !_ && !c && !x && !m && D && D(o);
-  }, X = (e) => {
-    var g;
-    const y = ((g = O.current) == null ? void 0 : g.scrollLeft) || 0;
-    if (!_ && Math.abs(e.clientX - H) > 5 && B(!0), c) {
-      const d = e.clientX + y, S = Math.max(0, Math.min(d - E.x, a - p));
-      k({ left: S, width: p });
-    } else if (x) {
-      e.clientX + y;
-      const d = e.clientX - H, S = Math.max(0, R.current.left + d), W = R.current.width - d;
-      W >= 20 && k({ left: S, width: W });
-    } else if (m) {
-      const d = e.clientX - H, S = Math.max(20, R.current.width + d);
-      k({ left: R.current.left, width: S });
+  const { left: i, width: p } = ce(n, t, o, s), u = n.progress || 0, I = (() => {
+    if (n.color)
+      return n.color;
+    if (w)
+      return w(n);
+    if (S) {
+      if (S.statusColors && n.status && S.statusColors[n.status])
+        return S.statusColors[n.status];
+      if (S.assigneeColors && n.assignedTo && S.assigneeColors[n.assignedTo])
+        return S.assigneeColors[n.assignedTo];
+      if (S.colorPalette) {
+        const e = S.colorPalette;
+        if (e.colors && e.colors.length > 0)
+          return e.colors[c % e.colors.length];
+        if (u === 100 && e.completed) return e.completed;
+        if (u > 0 && e.inProgress) return e.inProgress;
+        if (u === 0 && e.notStarted) return e.notStarted;
+        if (e.preset)
+          return Te(e.preset, u);
+      }
     }
-  }, F = () => {
-    if (console.log("🖱️ TaskBar.handleMouseUp"), console.log("   isDragging:", c), console.log("   isResizingLeft:", x), console.log("   isResizingRight:", m), c || x || m) {
-      const e = b.left !== R.current.left || b.width !== R.current.width;
-      if (console.log("📏 Position check:"), console.log("   positionChanged:", e), console.log("   tempPosition:", b), console.log("   dragStartRef:", R.current), console.log("   onTaskUpdate:", u ? "defined" : "NOT DEFINED"), e && u) {
-        const g = (r.getTime() - t.getTime()) / a, d = t.getTime() + b.left * g, S = t.getTime() + (b.left + b.width) * g, W = new Date(d).toISOString().split("T")[0], P = new Date(S).toISOString().split("T")[0];
-        console.log("🎯 Calling onTaskUpdate"), console.log("   taskId:", o.id), console.log("   new start:", W), console.log("   new end:", P), u(String(o.id), {
-          start: W,
-          end: P
+    return u === 100 ? "#10b981" : u > 0 ? "#3b82f6" : "#6b7280";
+  })(), [b, H] = z(!1), [y, R] = z(!1), [m, $] = z(!1), [E, M] = z({ x: 0, y: 0 }), [T, k] = z({ left: i, width: p }), [P, N] = z(0), [F, G] = z(!1), W = B({ left: i, width: p }), U = B(null), _ = B({ left: i, width: p });
+  ee.useEffect(() => {
+    const e = document.querySelector("[data-gantt-chart-scroll]");
+    e && (U.current = e);
+  }, []);
+  const X = (e, v) => {
+    var f;
+    e.stopPropagation(), e.preventDefault();
+    const h = ((f = U.current) == null ? void 0 : f.scrollLeft) || 0;
+    G(!1), v === "move" ? (H(!0), N(e.clientX), M({ x: e.clientX - i + h, y: 0 })) : v === "resize-left" ? (R(!0), N(e.clientX)) : v === "resize-right" && ($(!0), N(e.clientX)), W.current = { left: i, width: p };
+  }, V = (e) => {
+    e.stopPropagation(), !F && !b && !y && !m && g && g(n);
+  }, A = (e) => {
+    var h;
+    const v = ((h = U.current) == null ? void 0 : h.scrollLeft) || 0;
+    if (!F && Math.abs(e.clientX - P) > 5 && G(!0), b) {
+      const f = e.clientX + v, C = Math.max(0, Math.min(f - E.x, s - p));
+      k({ left: C, width: p });
+    } else if (y) {
+      e.clientX + v;
+      const f = e.clientX - P, C = Math.max(0, W.current.left + f), L = W.current.width - f;
+      L >= 20 && k({ left: C, width: L });
+    } else if (m) {
+      const f = e.clientX - P, C = Math.max(20, W.current.width + f);
+      k({ left: W.current.left, width: C });
+    }
+  }, Y = () => {
+    if (console.log("🖱️ TaskBar.handleMouseUp"), console.log("   isDragging:", b), console.log("   isResizingLeft:", y), console.log("   isResizingRight:", m), b || y || m) {
+      const e = T.left !== W.current.left || T.width !== W.current.width;
+      if (console.log("📏 Position check:"), console.log("   positionChanged:", e), console.log("   tempPosition:", T), console.log("   dragStartRef:", W.current), console.log("   onTaskUpdate:", d ? "defined" : "NOT DEFINED"), e && d) {
+        const h = (o.getTime() - t.getTime()) / s, f = t.getTime() + T.left * h, C = t.getTime() + (T.left + T.width) * h, L = new Date(f).toISOString().split("T")[0], q = new Date(C).toISOString().split("T")[0];
+        console.log("🎯 Calling onTaskUpdate"), console.log("   taskId:", n.id), console.log("   new start:", L), console.log("   new end:", q), d(String(n.id), {
+          start: L,
+          end: q
         });
       } else
-        console.log("❌ NOT calling onTaskUpdate"), console.log("   Reason: positionChanged =", e, ", onTaskUpdate =", !!u);
+        console.log("❌ NOT calling onTaskUpdate"), console.log("   Reason: positionChanged =", e, ", onTaskUpdate =", !!d);
     } else
       console.log("⏭️ Skipping - not dragging or resizing");
-    v(!1), M(!1), C(!1);
+    H(!1), R(!1), $(!1);
   };
-  q.useEffect(() => {
-    if (c || x || m)
-      return document.addEventListener("mousemove", X), document.addEventListener("mouseup", F), () => {
-        document.removeEventListener("mousemove", X), document.removeEventListener("mouseup", F);
+  ee.useEffect(() => {
+    if (b || y || m)
+      return document.addEventListener("mousemove", A), document.addEventListener("mouseup", Y), () => {
+        document.removeEventListener("mousemove", A), document.removeEventListener("mouseup", Y);
       };
-  }, [c, x, m, b]), q.useEffect(() => {
-    !c && !x && !m && (N.current.left !== l || N.current.width !== p) && (k({ left: l, width: p }), N.current = { left: l, width: p });
-  }, [l, p, c, x, m]);
-  const Y = c || x || m ? b.left : l, A = c || x || m ? b.width : p, j = {
+  }, [b, y, m, T]), ee.useEffect(() => {
+    !b && !y && !m && (_.current.left !== i || _.current.width !== p) && (k({ left: i, width: p }), _.current = { left: i, width: p });
+  }, [i, p, b, y, m]);
+  const J = b || y || m ? T.left : i, K = b || y || m ? T.width : p, Q = "level" in n && n.level > 0, j = "hasChildren" in n && n.hasChildren, Z = {
     position: "absolute",
-    left: `${Y}px`,
-    top: `${f * n + 10}px`,
-    width: `${A}px`,
-    height: `${n - 20}px`,
-    backgroundColor: "#3b82f6",
+    left: `${J}px`,
+    top: `${c * r + 10}px`,
+    width: `${K}px`,
+    height: `${r - 20}px`,
+    backgroundColor: I,
     borderRadius: "4px",
     display: "flex",
     alignItems: "center",
     padding: "0 8px",
     color: "#fff",
     fontSize: "12px",
-    fontWeight: 500,
+    fontWeight: j ? 600 : 500,
     overflow: "hidden",
     whiteSpace: "nowrap",
     textOverflow: "ellipsis",
-    cursor: c ? "grabbing" : "grab",
-    boxShadow: c || x || m ? "0 4px 6px rgba(0,0,0,0.3)" : "0 1px 3px rgba(0,0,0,0.2)",
-    transition: c || x || m ? "none" : "transform 0.1s",
-    userSelect: "none"
-  }, V = {
+    cursor: b ? "grabbing" : "grab",
+    boxShadow: b || y || m ? "0 4px 6px rgba(0,0,0,0.3)" : "0 1px 3px rgba(0,0,0,0.2)",
+    transition: b || y || m ? "none" : "transform 0.1s",
+    userSelect: "none",
+    opacity: Q ? 0.9 : 1,
+    border: j ? "2px solid rgba(255,255,255,0.3)" : "none"
+  }, ne = {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
-    width: `${T}%`,
+    width: `${u}%`,
     backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: "4px",
     transition: "width 0.3s",
     pointerEvents: "none"
-  }, i = (e) => ({
+  }, l = (e) => ({
     position: "absolute",
     [e]: 0,
     top: 0,
@@ -207,79 +400,85 @@ const re = (o, t) => K(t, o), se = (o) => {
     zIndex: 2,
     backgroundColor: "transparent"
   });
-  return /* @__PURE__ */ s(te, { children: /* @__PURE__ */ w(
+  return /* @__PURE__ */ a(ie, { children: /* @__PURE__ */ x(
     "div",
     {
       "data-task-bar": "true",
-      style: j,
-      title: `${o.name} (${new Date(o.start || o.startDate).toLocaleDateString()} - ${new Date(o.end || o.endDate).toLocaleDateString()})
+      style: Z,
+      title: `${n.name} (${new Date(n.start || n.startDate).toLocaleDateString()} - ${new Date(n.end || n.endDate).toLocaleDateString()})
 Drag to move, drag edges to resize, double-click to edit`,
-      onClick: G,
-      onMouseDown: (e) => U(e, "move"),
-      onDoubleClick: () => h == null ? void 0 : h(o),
-      onMouseEnter: (e) => !c && (e.currentTarget.style.transform = "translateY(-2px)"),
-      onMouseLeave: (e) => !c && (e.currentTarget.style.transform = "translateY(0)"),
+      onClick: V,
+      onMouseDown: (e) => X(e, "move"),
+      onDoubleClick: () => D == null ? void 0 : D(n),
+      onMouseEnter: (e) => !b && (e.currentTarget.style.transform = "translateY(-2px)"),
+      onMouseLeave: (e) => !b && (e.currentTarget.style.transform = "translateY(0)"),
       children: [
-        /* @__PURE__ */ s(
+        /* @__PURE__ */ a(
           "div",
           {
-            style: i("left"),
-            onMouseDown: (e) => U(e, "resize-left"),
+            style: l("left"),
+            onMouseDown: (e) => X(e, "resize-left"),
             title: "Drag to change start date"
           }
         ),
-        T > 0 && /* @__PURE__ */ s("div", { style: V }),
-        /* @__PURE__ */ s("span", { style: { position: "relative", zIndex: 1 }, children: o.name }),
-        /* @__PURE__ */ s(
+        u > 0 && /* @__PURE__ */ a("div", { style: ne }),
+        /* @__PURE__ */ a("span", { style: { position: "relative", zIndex: 1 }, children: n.name }),
+        /* @__PURE__ */ a(
           "div",
           {
-            style: i("right"),
-            onMouseDown: (e) => U(e, "resize-right"),
+            style: l("right"),
+            onMouseDown: (e) => X(e, "resize-right"),
             title: "Drag to change end date"
           }
         )
       ]
     }
   ) });
-}, ce = ({
-  isOpen: o,
+}, Ce = ({
+  isOpen: n,
   onClose: t,
-  onSave: r,
-  initialDate: a,
-  editingTask: n
+  onSave: o,
+  initialDate: s,
+  editingTask: r,
+  allTasks: c = []
 }) => {
-  const [f, u] = z({
+  const [d, g] = z({
     name: "",
     description: "",
-    startDate: a || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-    endDate: a || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-    progress: 0
+    startDate: s || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+    endDate: s || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+    progress: 0,
+    parentId: null
   });
-  ne(() => {
-    n ? u({
-      name: n.name,
-      description: n.description || "",
-      startDate: n.startDate,
-      endDate: n.endDate,
-      progress: n.progress || 0
-    }) : o && u({
+  de(() => {
+    r ? g({
+      name: r.name,
+      description: r.description || "",
+      startDate: r.startDate,
+      endDate: r.endDate,
+      progress: r.progress || 0,
+      parentId: r.parentId || null
+    }) : n && g({
       name: "",
       description: "",
-      startDate: a || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-      endDate: a || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
-      progress: 0
+      startDate: s || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+      endDate: s || (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+      progress: 0,
+      parentId: null
     });
-  }, [n, o, a]);
-  const D = (l) => {
-    l.preventDefault(), f.name.trim() && (r(n ? { ...n, ...f } : f), t());
-  }, h = (l) => {
-    const { name: p, value: T, type: c } = l.target;
-    u((v) => ({
-      ...v,
-      [p]: c === "number" ? Number(T) : T
+  }, [r, n, s]);
+  const D = (i) => {
+    i.preventDefault(), d.name.trim() && (o(r ? { ...r, ...d } : d), t());
+  }, w = (i) => {
+    const { name: p, value: u, type: O } = i.target;
+    g((I) => ({
+      ...I,
+      [p]: O === "number" ? Number(u) : p === "parentId" && u === "" ? null : u
     }));
   };
-  return o ? /* @__PURE__ */ s("div", { style: {
+  if (!n) return null;
+  const S = be(c, r == null ? void 0 : r.id);
+  return /* @__PURE__ */ a("div", { style: {
     position: "fixed",
     top: 0,
     left: 0,
@@ -290,7 +489,7 @@ Drag to move, drag edges to resize, double-click to edit`,
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1e3
-  }, children: /* @__PURE__ */ w("div", { style: {
+  }, children: /* @__PURE__ */ x("div", { style: {
     backgroundColor: "#fff",
     borderRadius: "8px",
     padding: "24px",
@@ -298,17 +497,17 @@ Drag to move, drag edges to resize, double-click to edit`,
     maxWidth: "500px",
     boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
   }, children: [
-    /* @__PURE__ */ s("h2", { style: { margin: "0 0 20px 0", fontSize: "20px", fontWeight: 600 }, children: n ? "Edit Task" : "Add New Task" }),
-    /* @__PURE__ */ w("form", { onSubmit: D, children: [
-      /* @__PURE__ */ w("div", { style: { marginBottom: "16px" }, children: [
-        /* @__PURE__ */ s("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Task Name *" }),
-        /* @__PURE__ */ s(
+    /* @__PURE__ */ a("h2", { style: { margin: "0 0 20px 0", fontSize: "20px", fontWeight: 600 }, children: r ? "Edit Task" : "Add New Task" }),
+    /* @__PURE__ */ x("form", { onSubmit: D, children: [
+      /* @__PURE__ */ x("div", { style: { marginBottom: "16px" }, children: [
+        /* @__PURE__ */ a("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Task Name *" }),
+        /* @__PURE__ */ a(
           "input",
           {
             type: "text",
             name: "name",
-            value: f.name,
-            onChange: h,
+            value: d.name,
+            onChange: w,
             placeholder: "Enter task name",
             required: !0,
             style: {
@@ -322,14 +521,14 @@ Drag to move, drag edges to resize, double-click to edit`,
           }
         )
       ] }),
-      /* @__PURE__ */ w("div", { style: { marginBottom: "16px" }, children: [
-        /* @__PURE__ */ s("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Description" }),
-        /* @__PURE__ */ s(
+      /* @__PURE__ */ x("div", { style: { marginBottom: "16px" }, children: [
+        /* @__PURE__ */ a("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Description" }),
+        /* @__PURE__ */ a(
           "textarea",
           {
             name: "description",
-            value: f.description,
-            onChange: h,
+            value: d.description,
+            onChange: w,
             placeholder: "Enter task description (optional)",
             rows: 3,
             style: {
@@ -345,15 +544,40 @@ Drag to move, drag edges to resize, double-click to edit`,
           }
         )
       ] }),
-      /* @__PURE__ */ w("div", { style: { marginBottom: "16px" }, children: [
-        /* @__PURE__ */ s("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Start Date *" }),
-        /* @__PURE__ */ s(
+      /* @__PURE__ */ x("div", { style: { marginBottom: "16px" }, children: [
+        /* @__PURE__ */ a("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Parent Task (Optional)" }),
+        /* @__PURE__ */ x(
+          "select",
+          {
+            name: "parentId",
+            value: d.parentId || "",
+            onChange: w,
+            style: {
+              width: "100%",
+              padding: "8px 12px",
+              border: "1px solid #d1d5db",
+              borderRadius: "4px",
+              fontSize: "14px",
+              boxSizing: "border-box",
+              backgroundColor: "#fff"
+            },
+            children: [
+              /* @__PURE__ */ a("option", { value: "", children: "None (Top-level task)" }),
+              S.map((i) => /* @__PURE__ */ a("option", { value: i.id, children: i.name }, i.id))
+            ]
+          }
+        ),
+        /* @__PURE__ */ a("p", { style: { fontSize: "12px", color: "#6b7280", marginTop: "4px" }, children: "Select a parent task to make this a subtask" })
+      ] }),
+      /* @__PURE__ */ x("div", { style: { marginBottom: "16px" }, children: [
+        /* @__PURE__ */ a("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Start Date *" }),
+        /* @__PURE__ */ a(
           "input",
           {
             type: "date",
             name: "startDate",
-            value: f.startDate,
-            onChange: h,
+            value: d.startDate,
+            onChange: w,
             required: !0,
             style: {
               width: "100%",
@@ -366,17 +590,17 @@ Drag to move, drag edges to resize, double-click to edit`,
           }
         )
       ] }),
-      /* @__PURE__ */ w("div", { style: { marginBottom: "16px" }, children: [
-        /* @__PURE__ */ s("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "End Date *" }),
-        /* @__PURE__ */ s(
+      /* @__PURE__ */ x("div", { style: { marginBottom: "16px" }, children: [
+        /* @__PURE__ */ a("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "End Date *" }),
+        /* @__PURE__ */ a(
           "input",
           {
             type: "date",
             name: "endDate",
-            value: f.endDate,
-            onChange: h,
+            value: d.endDate,
+            onChange: w,
             required: !0,
-            min: f.startDate,
+            min: d.startDate,
             style: {
               width: "100%",
               padding: "8px 12px",
@@ -388,15 +612,15 @@ Drag to move, drag edges to resize, double-click to edit`,
           }
         )
       ] }),
-      /* @__PURE__ */ w("div", { style: { marginBottom: "24px" }, children: [
-        /* @__PURE__ */ s("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Progress (%)" }),
-        /* @__PURE__ */ s(
+      /* @__PURE__ */ x("div", { style: { marginBottom: "24px" }, children: [
+        /* @__PURE__ */ a("label", { style: { display: "block", marginBottom: "8px", fontSize: "14px", fontWeight: 500 }, children: "Progress (%)" }),
+        /* @__PURE__ */ a(
           "input",
           {
             type: "number",
             name: "progress",
-            value: f.progress,
-            onChange: h,
+            value: d.progress,
+            onChange: w,
             min: "0",
             max: "100",
             style: {
@@ -410,8 +634,8 @@ Drag to move, drag edges to resize, double-click to edit`,
           }
         )
       ] }),
-      /* @__PURE__ */ w("div", { style: { display: "flex", gap: "12px", justifyContent: "flex-end" }, children: [
-        /* @__PURE__ */ s(
+      /* @__PURE__ */ x("div", { style: { display: "flex", gap: "12px", justifyContent: "flex-end" }, children: [
+        /* @__PURE__ */ a(
           "button",
           {
             type: "button",
@@ -429,7 +653,7 @@ Drag to move, drag edges to resize, double-click to edit`,
             children: "Cancel"
           }
         ),
-        /* @__PURE__ */ s(
+        /* @__PURE__ */ a(
           "button",
           {
             type: "submit",
@@ -443,75 +667,79 @@ Drag to move, drag edges to resize, double-click to edit`,
               fontWeight: 500,
               cursor: "pointer"
             },
-            children: n ? "Update Task" : "Add Task"
+            children: r ? "Update Task" : "Add Task"
           }
         )
       ] })
     ] })
-  ] }) }) : null;
-}, xe = ({
-  tasks: o,
+  ] }) });
+}, Le = ({
+  tasks: n,
   onChange: t,
-  onTaskClick: r,
-  onTaskDoubleClick: a,
-  viewMode: n = "day",
-  locale: f = "en-US",
-  height: u = 600
+  onTaskClick: o,
+  onTaskDoubleClick: s,
+  getTaskColor: r,
+  config: c,
+  viewMode: d = "day",
+  locale: g = "en-US",
+  height: D = 600
 }) => {
-  const l = $(null), p = $(null), T = $(null), [c, v] = z(!1), [x, M] = z(""), [m, C] = z(null), E = J(() => se(o), [o]), I = J(
-    () => ie(E.start, E.end, n),
-    [E, n]
-  ), b = I.length * 80, k = (i) => {
-    p.current && (p.current.scrollTop = i.currentTarget.scrollTop), T.current && (T.current.scrollLeft = i.currentTarget.scrollLeft);
-  }, H = (i) => {
-    l.current && (l.current.scrollTop = i.currentTarget.scrollTop);
-  }, L = (i) => {
-    l.current && (l.current.scrollLeft = i.currentTarget.scrollLeft);
-  }, _ = (i, e) => {
-    if (console.log("🔄 GanttChart.handleTaskUpdate called:", { taskId: i, updates: e }), console.log("📋 Current tasks:", o), console.log("🎯 onChange prop:", t ? "defined" : "NOT DEFINED"), t) {
-      const y = o.map((g) => {
-        if (g.id === i) {
-          if (console.log("📝 Found task to update:", g.id), console.log("   Old values:", {
-            startDate: g.startDate,
-            start: g.start,
-            endDate: g.endDate,
-            end: g.end
-          }), "startDate" in g) {
+  const i = B(null), p = B(null), u = B(null), [O, I] = z(!1), [b, H] = z(""), [y, R] = z(null), [m, $] = z(/* @__PURE__ */ new Set()), E = te(() => ue(n, m), [n, m]), M = te(() => pe(E), [E]), T = te(
+    () => ge(M.start, M.end, d),
+    [M, d]
+  ), k = (l) => {
+    $((e) => he(l, e));
+  }, P = T.length * 80, N = (l) => {
+    p.current && (p.current.scrollTop = l.currentTarget.scrollTop), u.current && (u.current.scrollLeft = l.currentTarget.scrollLeft);
+  }, F = (l) => {
+    i.current && (i.current.scrollTop = l.currentTarget.scrollTop);
+  }, G = (l) => {
+    i.current && (i.current.scrollLeft = l.currentTarget.scrollLeft);
+  }, W = (l, e) => {
+    if (console.log("🔄 GanttChart.handleTaskUpdate called:", { taskId: l, updates: e }), console.log("📋 Current tasks:", n), console.log("🎯 onChange prop:", t ? "defined" : "NOT DEFINED"), t) {
+      const v = n.map((h) => {
+        if (h.id === l) {
+          if (console.log("📝 Found task to update:", h.id), console.log("   Old values:", {
+            startDate: h.startDate,
+            start: h.start,
+            endDate: h.endDate,
+            end: h.end
+          }), "startDate" in h) {
             console.log("   Task uses startDate/endDate format");
-            const d = { ...g };
-            return Object.keys(e).forEach((S) => {
-              S === "start" && e.start ? (d.startDate = e.start, d.start = e.start, console.log("   Setting startDate & start to:", e.start)) : S === "end" && e.end ? (d.endDate = e.end, d.end = e.end, console.log("   Setting endDate & end to:", e.end)) : d[S] = e[S];
+            const f = { ...h };
+            return Object.keys(e).forEach((C) => {
+              C === "start" && e.start ? (f.startDate = e.start, f.start = e.start, console.log("   Setting startDate & start to:", e.start)) : C === "end" && e.end ? (f.endDate = e.end, f.end = e.end, console.log("   Setting endDate & end to:", e.end)) : f[C] = e[C];
             }), console.log("   Updated task:", {
-              startDate: d.startDate,
-              endDate: d.endDate
-            }), d;
+              startDate: f.startDate,
+              endDate: f.endDate
+            }), f;
           } else
             console.log("   Task uses start/end format");
-          return { ...g, ...e };
+          return { ...h, ...e };
         }
-        return g;
+        return h;
       });
-      console.log("📤 Calling onChange with updated tasks"), console.log("   Updated tasks count:", y.length), t(y);
+      console.log("📤 Calling onChange with updated tasks"), console.log("   Updated tasks count:", v.length), t(v);
     } else
       console.error("❌ onChange is NOT DEFINED!");
-  }, B = (i) => {
-    var S;
-    if (i.target.closest("[data-task-bar]") || r)
+  }, U = (l) => {
+    var C;
+    if (l.target.closest("[data-task-bar]") || o)
       return;
-    const e = i.currentTarget.getBoundingClientRect(), y = i.clientX - e.left + (((S = l.current) == null ? void 0 : S.scrollLeft) || 0), g = Math.floor(y / 80), d = I[g];
-    if (d) {
-      const W = d.startDate, P = W.getFullYear(), Q = String(W.getMonth() + 1).padStart(2, "0"), Z = String(W.getDate()).padStart(2, "0"), ee = `${P}-${Q}-${Z}`;
-      M(ee), C(null), v(!0);
+    const e = l.currentTarget.getBoundingClientRect(), v = l.clientX - e.left + (((C = i.current) == null ? void 0 : C.scrollLeft) || 0), h = Math.floor(v / 80), f = T[h];
+    if (f) {
+      const L = f.startDate, q = L.getFullYear(), se = String(L.getMonth() + 1).padStart(2, "0"), ae = String(L.getDate()).padStart(2, "0"), le = `${q}-${se}-${ae}`;
+      H(le), R(null), I(!0);
     }
-  }, R = (i) => {
-    C(i);
-    const e = i.start || i.startDate;
-    M(typeof e == "string" ? e : e.toISOString().split("T")[0]), v(!0);
-  }, O = (i) => {
+  }, _ = (l) => {
+    R(l);
+    const e = l.start || l.startDate;
+    H(typeof e == "string" ? e : e.toISOString().split("T")[0]), I(!0);
+  }, X = (l) => {
     if (t)
-      if ("id" in i) {
-        const e = o.map(
-          (y) => y.id === i.id ? i : y
+      if ("id" in l) {
+        const e = n.map(
+          (v) => v.id === l.id ? l : v
         );
         t(e);
       } else {
@@ -519,27 +747,27 @@ Drag to move, drag edges to resize, double-click to edit`,
           name: "",
           start: (/* @__PURE__ */ new Date()).toISOString(),
           end: (/* @__PURE__ */ new Date()).toISOString(),
-          ...i,
+          ...l,
           id: `task-${Date.now()}`
         };
-        t([...o, e]);
+        t([...n, e]);
       }
-    v(!1), C(null);
-  }, N = {
+    I(!1), R(null);
+  }, V = {
     display: "flex",
     border: "1px solid #e5e7eb",
     borderRadius: "8px",
     overflow: "hidden",
     fontFamily: "system-ui, -apple-system, sans-serif",
     backgroundColor: "#fff",
-    height: u
-  }, U = {
+    height: D
+  }, A = {
     width: 250,
     borderRight: "2px solid #e5e7eb",
     display: "flex",
     flexDirection: "column",
     overflow: "hidden"
-  }, G = {
+  }, Y = {
     height: 60,
     borderBottom: "2px solid #e5e7eb",
     background: "#f9fafb",
@@ -550,89 +778,89 @@ Drag to move, drag edges to resize, double-click to edit`,
     fontSize: "14px",
     color: "#374151",
     flexShrink: 0
-  }, X = {
+  }, J = {
     flex: 1,
     overflowY: "auto",
     overflowX: "hidden"
-  }, F = {
+  }, K = {
     flex: 1,
     display: "flex",
     flexDirection: "column",
     overflow: "hidden"
-  }, Y = {
+  }, Q = {
     overflowX: "auto",
     overflowY: "hidden",
     borderBottom: "2px solid #e5e7eb",
     backgroundColor: "#fff",
     flexShrink: 0
-  }, A = {
+  }, j = {
     flex: 1,
     overflowX: "auto",
     overflowY: "auto"
-  }, j = {
+  }, Z = {
     position: "relative",
-    height: `${o.length * 50}px`,
-    width: `${b}px`,
+    height: `${E.length * 50}px`,
+    width: `${P}px`,
     minWidth: "100%",
     backgroundColor: "#fff"
   };
-  return /* @__PURE__ */ w("div", { style: N, children: [
-    /* @__PURE__ */ w("div", { style: U, children: [
-      /* @__PURE__ */ s("div", { style: G, children: "Task Name" }),
-      /* @__PURE__ */ s(
+  return /* @__PURE__ */ x("div", { style: V, children: [
+    /* @__PURE__ */ x("div", { style: A, children: [
+      /* @__PURE__ */ a("div", { style: Y, children: "Task Name" }),
+      /* @__PURE__ */ a(
         "div",
         {
           ref: p,
-          onScroll: H,
-          style: X,
-          children: /* @__PURE__ */ s(le, { tasks: o, rowHeight: 50 })
+          onScroll: F,
+          style: J,
+          children: /* @__PURE__ */ a(we, { tasks: E, rowHeight: 50, onToggleExpand: k })
         }
       )
     ] }),
-    /* @__PURE__ */ w("div", { style: F, children: [
-      /* @__PURE__ */ s(
+    /* @__PURE__ */ x("div", { style: K, children: [
+      /* @__PURE__ */ a(
         "div",
         {
-          ref: T,
-          onScroll: L,
-          style: Y,
-          children: /* @__PURE__ */ s(ae, { units: I, chartWidth: b, unitWidth: 80 })
+          ref: u,
+          onScroll: G,
+          style: Q,
+          children: /* @__PURE__ */ a(ye, { units: T, chartWidth: P, unitWidth: 80 })
         }
       ),
-      /* @__PURE__ */ s(
+      /* @__PURE__ */ a(
         "div",
         {
-          ref: l,
+          ref: i,
           "data-gantt-chart-scroll": "true",
-          onScroll: k,
-          style: A,
-          children: /* @__PURE__ */ w(
+          onScroll: N,
+          style: j,
+          children: /* @__PURE__ */ x(
             "div",
             {
-              style: j,
-              onClick: B,
+              style: Z,
+              onClick: U,
               children: [
-                /* @__PURE__ */ s("div", { style: {
+                /* @__PURE__ */ a("div", { style: {
                   position: "absolute",
                   top: 0,
                   left: 0,
                   right: 0,
                   bottom: 0,
                   display: "flex"
-                }, children: I.map((i, e) => /* @__PURE__ */ s(
+                }, children: T.map((l, e) => /* @__PURE__ */ a(
                   "div",
                   {
                     style: {
                       width: "80px",
                       minWidth: "80px",
                       maxWidth: "80px",
-                      borderRight: e < I.length - 1 ? "1px solid #f3f4f6" : "none",
+                      borderRight: e < T.length - 1 ? "1px solid #f3f4f6" : "none",
                       boxSizing: "border-box"
                     }
                   },
                   e
                 )) }),
-                o.map((i, e) => /* @__PURE__ */ s(
+                E.map((l, e) => /* @__PURE__ */ a(
                   "div",
                   {
                     style: {
@@ -641,25 +869,27 @@ Drag to move, drag edges to resize, double-click to edit`,
                       right: 0,
                       top: `${e * 50}px`,
                       height: "50px",
-                      borderBottom: e < o.length - 1 ? "1px solid #f3f4f6" : "none"
+                      borderBottom: e < E.length - 1 ? "1px solid #f3f4f6" : "none"
                     }
                   },
                   e
                 )),
-                o.map((i, e) => /* @__PURE__ */ s(
-                  de,
+                E.map((l, e) => /* @__PURE__ */ a(
+                  ve,
                   {
-                    task: i,
-                    timelineStart: E.start,
-                    timelineEnd: E.end,
-                    chartWidth: b,
+                    task: l,
+                    timelineStart: M.start,
+                    timelineEnd: M.end,
+                    chartWidth: P,
                     rowHeight: 50,
                     index: e,
-                    onTaskUpdate: _,
-                    onClick: r,
-                    onDoubleClick: a || (r ? void 0 : R)
+                    onTaskUpdate: W,
+                    onClick: o,
+                    onDoubleClick: s || (o ? void 0 : _),
+                    getTaskColor: r,
+                    config: c
                   },
-                  i.id
+                  l.id
                 ))
               ]
             }
@@ -667,23 +897,34 @@ Drag to move, drag edges to resize, double-click to edit`,
         }
       )
     ] }),
-    /* @__PURE__ */ s(
-      ce,
+    /* @__PURE__ */ a(
+      Ce,
       {
-        isOpen: c,
+        isOpen: O,
         onClose: () => {
-          v(!1), C(null);
+          I(!1), R(null);
         },
-        onSave: O,
-        initialDate: x,
-        editingTask: m
+        onSave: X,
+        initialDate: b,
+        editingTask: y,
+        allTasks: n
       }
     )
   ] });
 };
 export {
-  xe as GanttChart,
-  ce as TaskModal,
-  he as transformFromGanttTask,
-  ue as transformToGanttTasks
+  re as COLOR_PALETTES,
+  Le as GanttChart,
+  Ce as TaskModal,
+  De as addSubtask,
+  xe as findTaskById,
+  ue as flattenTasks,
+  Se as getIndentation,
+  We as getPaletteColor,
+  be as getParentTaskOptions,
+  Te as getProgressColor,
+  he as toggleTaskExpansion,
+  Me as transformFromGanttTask,
+  Ee as transformToGanttTasks,
+  me as updateTaskInHierarchy
 };

@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react'
-import { GanttChartProps, Task } from '../types'
-import { getDateRange, generateTimeline } from '../utils'
+import { GanttChartProps, Task, FlattenedTask } from '../types'
+import { getDateRange, generateTimeline, flattenTasks, toggleTaskExpansion } from '../utils'
 import Timeline from './Timeline'
 import TaskList from './TaskList'
 import TaskBar from './TaskBar'
@@ -11,6 +11,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   onChange,
   onTaskClick,
   onTaskDoubleClick,
+  getTaskColor,
+  config,
   viewMode = 'day',
   locale = 'en-US',
   height = 600
@@ -25,12 +27,21 @@ export const GanttChart: React.FC<GanttChartProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [expandedTaskIds, setExpandedTaskIds] = useState<Set<string | number>>(new Set())
 
-  const dateRange = useMemo(() => getDateRange(tasks), [tasks])
+  // Flatten tasks for rendering (maintains hierarchy info)
+  const flattenedTasks = useMemo(() => flattenTasks(tasks, expandedTaskIds), [tasks, expandedTaskIds])
+
+  const dateRange = useMemo(() => getDateRange(flattenedTasks), [flattenedTasks])
   const timelineUnits = useMemo(() => 
     generateTimeline(dateRange.start, dateRange.end, viewMode), 
     [dateRange, viewMode]
   )
+
+  // Handle expand/collapse
+  const handleToggleExpand = (taskId: string | number) => {
+    setExpandedTaskIds(prevIds => toggleTaskExpansion(taskId, prevIds))
+  }
 
   const CHART_WIDTH = timelineUnits.length * UNIT_WIDTH
 
@@ -237,7 +248,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
 
   const gridStyle: React.CSSProperties = {
     position: 'relative',
-    height: `${tasks.length * ROW_HEIGHT}px`,
+    height: `${flattenedTasks.length * ROW_HEIGHT}px`,
     width: `${CHART_WIDTH}px`,
     minWidth: '100%',
     backgroundColor: '#fff',
@@ -264,7 +275,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
           onScroll={handleListScroll}
           style={taskListScrollStyle}
         >
-          <TaskList tasks={tasks} rowHeight={ROW_HEIGHT} />
+          <TaskList tasks={flattenedTasks} rowHeight={ROW_HEIGHT} onToggleExpand={handleToggleExpand} />
         </div>
       </div>
 
@@ -307,7 +318,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
             </div>
 
             {/* Horizontal grid lines */}
-            {tasks.map((_, i) => (
+            {flattenedTasks.map((_, i) => (
               <div
                 key={i}
                 style={{
@@ -316,13 +327,13 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                   right: 0,
                   top: `${i * ROW_HEIGHT}px`,
                   height: `${ROW_HEIGHT}px`,
-                  borderBottom: i < tasks.length - 1 ? '1px solid #f3f4f6' : 'none',
+                  borderBottom: i < flattenedTasks.length - 1 ? '1px solid #f3f4f6' : 'none',
                 }}
               />
             ))}
 
             {/* Task bars */}
-            {tasks.map((task, i) => (
+            {flattenedTasks.map((task, i) => (
               <TaskBar
                 key={task.id}
                 task={task}
@@ -334,6 +345,8 @@ export const GanttChart: React.FC<GanttChartProps> = ({
                 onTaskUpdate={handleTaskUpdate}
                 onClick={onTaskClick}
                 onDoubleClick={onTaskDoubleClick || (onTaskClick ? undefined : handleTaskDoubleClick)}
+                getTaskColor={getTaskColor}
+                config={config}
               />
             ))}
           </div>
@@ -350,6 +363,7 @@ export const GanttChart: React.FC<GanttChartProps> = ({
         onSave={handleSaveTask}
         initialDate={selectedDate}
         editingTask={editingTask}
+        allTasks={tasks}
       />
     </div>
   )

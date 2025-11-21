@@ -4,6 +4,27 @@
 export type TaskStatus = 'Not Started' | 'In Progress' | 'Done';
 
 /**
+ * Predefined color palettes for task bars
+ */
+export type ColorPaletteName = 'default' | 'vivid' | 'pastel' | 'warm' | 'cool' | 'earth' | 'ocean' | 'forest';
+
+/**
+ * Color palette configuration - can be a preset name or custom colors
+ */
+export interface TaskColorPalette {
+  /** Preset palette name */
+  preset?: ColorPaletteName;
+  /** Custom color array (overrides preset) */
+  colors?: string[];
+  /** Color for completed tasks (100% progress) */
+  completed?: string;
+  /** Color for in-progress tasks (1-99% progress) */
+  inProgress?: string;
+  /** Color for not started tasks (0% progress) */
+  notStarted?: string;
+}
+
+/**
  * Gantt Task interface - the data structure your team will pass to the component
  */
 export interface GanttTask {
@@ -25,11 +46,23 @@ export interface GanttTask {
   /** Progress percentage (0-100) - shown for In Progress tasks */
   progress?: number;
   
+  /** Custom color for the task bar (CSS color value) */
+  color?: string;
+  
   /** Person assigned to the task */
   assignedTo?: string;
   
   /** Array of task IDs that this task depends on */
   dependencies?: (string | number)[];
+  
+  /** Parent task ID - for subtasks */
+  parentId?: string | number | null;
+  
+  /** Array of child tasks (subtasks) */
+  subtasks?: GanttTask[];
+  
+  /** Whether this parent task is expanded (showing subtasks) */
+  isExpanded?: boolean;
   
   /** Any additional custom data */
   [key: string]: any;
@@ -62,6 +95,24 @@ export interface GanttConfig {
   
   /** Show today line (default: true) */
   showTodayLine?: boolean;
+  
+  /** Show task dependencies (default: true) */
+  showDependencies?: boolean;
+  
+  /** Dependency line style */
+  dependencyStyle?: 'straight' | 'curved';
+  
+  /** Dependency line color */
+  dependencyColor?: string;
+  
+  /** Color palette for task bars - predefined or custom colors */
+  colorPalette?: TaskColorPalette;
+  
+  /** Mapping of status to color (overrides palette) */
+  statusColors?: Record<string, string>;
+  
+  /** Mapping of assignee to color (overrides palette) */
+  assigneeColors?: Record<string, string>;
 }
 
 /**
@@ -82,6 +133,9 @@ export interface GanttChartProps {
   
   /** Callback when a task is double-clicked - legacy support */
   onTaskDoubleClick?: (task: GanttTask) => void;
+  
+  /** Function to dynamically determine task bar color based on task properties (progress, status, etc.) */
+  getTaskColor?: (task: GanttTask) => string;
   
   /** Enable edit mode - allows clicking tasks to open edit dialog (default: true) */
   enableEdit?: boolean;
@@ -152,4 +206,16 @@ export type TimelineUnit = {
   startDate: Date;
   endDate: Date;
 };
+
+/**
+ * Flattened task with hierarchy metadata
+ */
+export interface FlattenedTask extends GanttTask {
+  /** Depth level in hierarchy (0 = root, 1 = first level subtask, etc.) */
+  level: number;
+  /** Whether this task has children */
+  hasChildren: boolean;
+  /** Whether the parent task is expanded */
+  isVisible: boolean;
+}
 

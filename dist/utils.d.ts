@@ -1,4 +1,4 @@
-import type { GanttTask, TaskStatus, DateRange } from './types';
+import type { GanttTask, TaskStatus, DateRange, FlattenedTask } from './types';
 /**
  * Default configuration values
  */
@@ -101,3 +101,32 @@ export declare const transformToGanttTasks: (data: any[]) => GanttTask[];
  * Use this when sending updates back to your API
  */
 export declare const transformFromGanttTask: (taskId: string | number, updates: Partial<GanttTask>) => any;
+/**
+ * Flatten hierarchical task structure for rendering
+ * Converts nested tasks with subtasks into a flat array with level metadata
+ */
+export declare const flattenTasks: (tasks: GanttTask[], expandedTaskIds?: Set<string | number>) => FlattenedTask[];
+/**
+ * Toggle task expansion state
+ */
+export declare const toggleTaskExpansion: (taskId: string | number, expandedTaskIds: Set<string | number>) => Set<string | number>;
+/**
+ * Get all parent task IDs for creating a parent selection list
+ */
+export declare const getParentTaskOptions: (tasks: GanttTask[], excludeTaskId?: string | number) => GanttTask[];
+/**
+ * Find a task by ID in hierarchical structure
+ */
+export declare const findTaskById: (tasks: GanttTask[], taskId: string | number) => GanttTask | null;
+/**
+ * Update a task in hierarchical structure (immutable)
+ */
+export declare const updateTaskInHierarchy: (tasks: GanttTask[], taskId: string | number, updates: Partial<GanttTask>) => GanttTask[];
+/**
+ * Add a subtask to a parent task
+ */
+export declare const addSubtask: (tasks: GanttTask[], parentId: string | number, subtask: GanttTask) => GanttTask[];
+/**
+ * Calculate indentation for hierarchical display
+ */
+export declare const getIndentation: (level: number, indentSize?: number) => number;

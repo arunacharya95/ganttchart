@@ -105,6 +105,43 @@ function App() {
   const [tasks, setTasks] = useState<GanttTask[]>(initialTasks);
 
   /**
+   * Custom color function - determines task bar color based on task properties
+   * You can base colors on: progress, status, assignedTo, or any custom property
+   */
+  const getTaskColor = (task: GanttTask): string => {
+    // Example 1: Color by status
+    switch (task.status) {
+      case 'Done':
+        return '#10b981'; // Green
+      case 'In Progress':
+        return '#3b82f6'; // Blue
+      case 'Not Started':
+        return '#6b7280'; // Gray
+      default:
+        return '#8b5cf6'; // Purple
+    }
+
+    // Example 2: Color by progress
+    // if (task.progress === 100) return '#10b981'; // Green
+    // if (task.progress >= 75) return '#3b82f6';   // Blue
+    // if (task.progress >= 50) return '#f59e0b';   // Orange
+    // if (task.progress > 0) return '#ef4444';     // Red
+    // return '#6b7280';                             // Gray
+
+    // Example 3: Color by assignee
+    // const assigneeColors: Record<string, string> = {
+    //   'Alice Johnson': '#ef4444',
+    //   'Bob Smith': '#3b82f6',
+    //   'Charlie Brown': '#10b981',
+    //   'Diana Prince': '#f59e0b',
+    //   'Eve Wilson': '#8b5cf6',
+    //   'Frank Miller': '#ec4899',
+    //   'Grace Lee': '#06b6d4',
+    // };
+    // return assigneeColors[task.assignedTo || ''] || '#6b7280';
+  };
+
+  /**
    * Handle task updates from drag/drop, resize, or edit
    * This is called automatically by the Gantt component
    */
@@ -185,6 +222,7 @@ function App() {
           }}
           onTaskUpdate={handleTaskUpdate}
           onTaskClick={handleTaskClick}
+          getTaskColor={getTaskColor} // Add custom color function
           enableEdit={true}
           height="600px"
           showTaskList={true}
