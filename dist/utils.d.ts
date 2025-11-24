@@ -90,7 +90,7 @@ export declare const getDateRange: (tasks: any[]) => {
 /**
  * Generate timeline (legacy compatibility)
  */
-export declare const generateTimeline: (start: Date, end: Date, mode: "day" | "week" | "month") => any[];
+export declare const generateTimeline: (start: Date, end: Date, mode: "day" | "week" | "month" | "quarter") => any[];
 /**
  * Transform API response data to GanttTask format
  * Handles various API response structures automatically
@@ -127,6 +127,25 @@ export declare const updateTaskInHierarchy: (tasks: GanttTask[], taskId: string 
  */
 export declare const addSubtask: (tasks: GanttTask[], parentId: string | number, subtask: GanttTask) => GanttTask[];
 /**
+ * Calculate critical path for project tasks
+ * Returns tasks marked as critical based on dependencies
+ */
+export declare const calculateCriticalPath: (tasks: GanttTask[]) => GanttTask[];
+/**
  * Calculate indentation for hierarchical display
  */
 export declare const getIndentation: (level: number, indentSize?: number) => number;
+/**
+ * Check if a date is a holiday
+ */
+export declare const isHoliday: (date: Date, holidays?: string[]) => boolean;
+/**
+ * Get the next working day (skipping weekends and holidays)
+ */
+export declare const getNextWorkingDay: (date: Date, holidays?: string[], showWeekends?: boolean) => Date;
+/**
+ * Automatically reschedule dependent tasks
+ * Returns a new array of tasks with updated dates
+ */
+export declare const autoScheduleTasks: (tasks: GanttTask[], dependencies: any[], // TaskDependency[]
+changedTaskId: string | number, holidays?: string[], showWeekends?: boolean) => GanttTask[];

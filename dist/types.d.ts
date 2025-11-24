@@ -3,6 +3,21 @@
  */
 export type TaskStatus = 'Not Started' | 'In Progress' | 'Done';
 /**
+ * Dependency types for task relationships
+ */
+export type DependencyType = 'FS' | 'FF' | 'SF' | 'SS';
+/**
+ * Dependency relationship between tasks
+ */
+export interface TaskDependency {
+    /** ID of the predecessor task */
+    from: string | number;
+    /** ID of the successor task */
+    to: string | number;
+    /** Type of dependency */
+    type: DependencyType;
+}
+/**
  * Predefined color palettes for task bars
  */
 export type ColorPaletteName = 'default' | 'vivid' | 'pastel' | 'warm' | 'cool' | 'earth' | 'ocean' | 'forest';
@@ -49,6 +64,17 @@ export interface GanttTask {
     subtasks?: GanttTask[];
     /** Whether this parent task is expanded (showing subtasks) */
     isExpanded?: boolean;
+    /** Mark this task as a milestone (displayed as diamond) */
+    isMilestone?: boolean;
+    /** Baseline dates for comparison */
+    baseline?: {
+        start: string | Date;
+        end: string | Date;
+    };
+    /** Lock schedule to prevent auto-rescheduling */
+    isLocked?: boolean;
+    /** Mark task as critical path */
+    isCritical?: boolean;
     /** Any additional custom data */
     [key: string]: any;
 }
@@ -78,12 +104,47 @@ export interface GanttConfig {
     dependencyStyle?: 'straight' | 'curved';
     /** Dependency line color */
     dependencyColor?: string;
+    /** Dependency line thickness */
+    dependencyThickness?: number;
+    /** Show dependency labels */
+    showDependencyLabels?: boolean;
+    /** Enable critical path highlighting */
+    showCriticalPath?: boolean;
+    /** Critical path color */
+    criticalPathColor?: string;
+    /** Show baseline comparison */
+    showBaseline?: boolean;
+    /** Baseline bar opacity */
+    baselineOpacity?: number;
+    /** Show milestone markers */
+    showMilestones?: boolean;
+    /** Milestone color */
+    milestoneColor?: string;
     /** Color palette for task bars - predefined or custom colors */
     colorPalette?: TaskColorPalette;
     /** Mapping of status to color (overrides palette) */
     statusColors?: Record<string, string>;
     /** Mapping of assignee to color (overrides palette) */
     assigneeColors?: Record<string, string>;
+    /** Custom columns for the task list */
+    columns?: TaskListColumn[];
+    /** List of holiday dates (YYYY-MM-DD) to mark as non-working */
+    holidays?: string[];
+    /** Automatically reschedule dependent tasks when a task is moved */
+    autoSchedule?: boolean;
+}
+/**
+ * Configuration for a column in the task list
+ */
+export interface TaskListColumn {
+    /** Unique identifier for the column (key in task object) */
+    id: string;
+    /** Header label */
+    label: string;
+    /** Width in pixels */
+    width?: number;
+    /** Custom render function */
+    render?: (task: GanttTask) => React.ReactNode;
 }
 /**
  * Gantt Chart Props - Main component interface
@@ -91,6 +152,8 @@ export interface GanttConfig {
 export interface GanttChartProps {
     /** Array of tasks to display in the Gantt chart */
     tasks: GanttTask[];
+    /** Array of task dependencies */
+    dependencies?: TaskDependency[];
     /** Configuration options for appearance and behavior */
     config?: GanttConfig;
     /** Callback when a task is updated (via drag/drop, resize, or edit) */
@@ -147,7 +210,7 @@ export type TaskType = GanttTask;
 /**
  * View mode for legacy components
  */
-export type ViewMode = 'day' | 'week' | 'month';
+export type ViewMode = 'day' | 'week' | 'month' | 'quarter';
 /**
  * Timeline unit for legacy components
  */
