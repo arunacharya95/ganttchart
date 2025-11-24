@@ -302,7 +302,7 @@ export const getDateRange = (tasks: any[]): { start: Date; end: Date } => {
 export const generateTimeline = (
   start: Date,
   end: Date,
-  mode: 'day' | 'week' | 'month'
+  mode: 'day' | 'week' | 'month' | 'quarter'
 ): any[] => {
   const units: any[] = [];
   const current = new Date(start);
@@ -322,6 +322,10 @@ export const generateTimeline = (
       weekEnd.setDate(weekEnd.getDate() + 7);
       label = `Week ${Math.ceil((current.getTime() - new Date(current.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))}`;
       unitEnd = weekEnd;
+    } else if (mode === 'quarter') {
+      const quarter = Math.floor(current.getMonth() / 3) + 1;
+      label = `Q${quarter} ${current.getFullYear()}`;
+      unitEnd = new Date(current.getFullYear(), current.getMonth() + 3, 1);
     } else {
       label = current.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       unitEnd = new Date(current.getFullYear(), current.getMonth() + 1, 1);
@@ -333,6 +337,8 @@ export const generateTimeline = (
       current.setDate(current.getDate() + 1);
     } else if (mode === 'week') {
       current.setDate(current.getDate() + 7);
+    } else if (mode === 'quarter') {
+      current.setMonth(current.getMonth() + 3);
     } else {
       current.setMonth(current.getMonth() + 1);
     }
@@ -533,9 +539,277 @@ export const addSubtask = (
 };
 
 /**
+ * Calculate critical path for project tasks
+ * Returns tasks marked as critical based on dependencies
+ */
+export const calculateCriticalPath = (tasks: GanttTask[]): GanttTask[] => {
+  // Build dependency graph
+  const taskMap = new Map<string | number, GanttTask>();
+  const inDegree = new Map<string | number, number>();
+  const outEdges = new Map<string | number, (string | number)[]>();
+  
+  // Initialize task map
+  tasks.forEach(task => {
+    taskMap.set(task.id, task);
+    inDegree.set(task.id, 0);
+    outEdges.set(task.id, []);
+  });
+  
+  // Build edges from dependencies
+  tasks.forEach(task => {
+    if (task.dependencies && task.dependencies.length > 0) {
+      task.dependencies.forEach(depId => {
+        const edges = outEdges.get(depId) || [];
+        edges.push(task.id);
+        outEdges.set(depId, edges);
+        inDegree.set(task.id, (inDegree.get(task.id) || 0) + 1);
+      });
+    }
+  });
+  
+  // Calculate earliest start/finish times (forward pass)
+  const earliestStart = new Map<string | number, number>();
+  const earliestFinish = new Map<string | number, number>();
+  const queue: (string | number)[] = [];
+  
+  tasks.forEach(task => {
+    if (inDegree.get(task.id) === 0) {
+      queue.push(task.id);
+      const startTime = toDate(task.start || task.startDate).getTime();
+      earliestStart.set(task.id, startTime);
+      earliestFinish.set(task.id, toDate(task.end || task.endDate).getTime());
+    }
+  });
+  
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    const edges = outEdges.get(currentId) || [];
+    
+    edges.forEach(nextId => {
+      const currentFinish = earliestFinish.get(currentId)!;
+      const nextTask = taskMap.get(nextId)!;
+      const nextDuration = toDate(nextTask.end || nextTask.endDate).getTime() - 
+                          toDate(nextTask.start || nextTask.startDate).getTime();
+      
+      const newStart = Math.max(
+        earliestStart.get(nextId) || 0,
+        currentFinish
+      );
+      
+      earliestStart.set(nextId, newStart);
+      earliestFinish.set(nextId, newStart + nextDuration);
+      
+      inDegree.set(nextId, (inDegree.get(nextId) || 0) - 1);
+      if (inDegree.get(nextId) === 0) {
+        queue.push(nextId);
+      }
+    });
+  }
+  
+  // Find project end time
+  let projectEnd = 0;
+  tasks.forEach(task => {
+    const finish = earliestFinish.get(task.id) || 0;
+    if (finish > projectEnd) {
+      projectEnd = finish;
+    }
+  });
+  
+  // Calculate latest start/finish times (backward pass)
+  const latestStart = new Map<string | number, number>();
+  const latestFinish = new Map<string | number, number>();
+  
+  tasks.forEach(task => {
+    if ((outEdges.get(task.id) || []).length === 0) {
+      latestFinish.set(task.id, projectEnd);
+      const duration = toDate(task.end || task.endDate).getTime() - 
+                      toDate(task.start || task.startDate).getTime();
+      latestStart.set(task.id, projectEnd - duration);
+    }
+  });
+  
+  // Backward pass
+  const reverseQueue = tasks.filter(t => (outEdges.get(t.id) || []).length === 0).map(t => t.id);
+  const processed = new Set<string | number>();
+  
+  while (reverseQueue.length > 0) {
+    const currentId = reverseQueue.shift()!;
+    if (processed.has(currentId)) continue;
+    processed.add(currentId);
+    
+    const currentTask = taskMap.get(currentId)!;
+    const currentLatestStart = latestStart.get(currentId)!;
+    
+    if (currentTask.dependencies) {
+      currentTask.dependencies.forEach(depId => {
+        const depTask = taskMap.get(depId)!;
+        const depDuration = toDate(depTask.end || depTask.endDate).getTime() - 
+                           toDate(depTask.start || depTask.startDate).getTime();
+        
+        const newLatestFinish = Math.min(
+          latestFinish.get(depId) || Number.MAX_SAFE_INTEGER,
+          currentLatestStart
+        );
+        
+        latestFinish.set(depId, newLatestFinish);
+        latestStart.set(depId, newLatestFinish - depDuration);
+        
+        reverseQueue.push(depId);
+      });
+    }
+  }
+  
+  // Mark critical tasks (slack = 0)
+  return tasks.map(task => {
+    const es = earliestStart.get(task.id) || 0;
+    const ls = latestStart.get(task.id) || 0;
+    const slack = ls - es;
+    
+    return {
+      ...task,
+      isCritical: Math.abs(slack) < 1000 // Within 1 second (accounting for rounding)
+    };
+  });
+};
+
+
+/**
  * Calculate indentation for hierarchical display
  */
 export const getIndentation = (level: number, indentSize: number = 20): number => {
   return level * indentSize;
+};
+
+/**
+ * Check if a date is a holiday
+ */
+export const isHoliday = (date: Date, holidays?: string[]): boolean => {
+  if (!holidays || holidays.length === 0) return false;
+  const dateStr = format(date, 'yyyy-MM-dd');
+  return holidays.includes(dateStr);
+};
+
+/**
+ * Get the next working day (skipping weekends and holidays)
+ */
+export const getNextWorkingDay = (
+  date: Date, 
+  holidays?: string[], 
+  showWeekends: boolean = true
+): Date => {
+  let nextDate = new Date(date);
+  // Safety break to prevent infinite loops
+  let checks = 0;
+  while (checks < 365) {
+    const isWeekend = !showWeekends && dateFnsIsWeekend(nextDate);
+    const isHol = isHoliday(nextDate, holidays);
+    
+    if (!isWeekend && !isHol) {
+      return nextDate;
+    }
+    nextDate = addDays(nextDate, 1);
+    checks++;
+  }
+  return nextDate;
+};
+
+/**
+ * Automatically reschedule dependent tasks
+ * Returns a new array of tasks with updated dates
+ */
+export const autoScheduleTasks = (
+  tasks: GanttTask[],
+  dependencies: any[], // TaskDependency[]
+  changedTaskId: string | number,
+  holidays?: string[],
+  showWeekends: boolean = true
+): GanttTask[] => {
+  // Deep clone the entire tree to avoid mutation
+  const cloneTree = (items: GanttTask[]): GanttTask[] => {
+    return items.map(item => ({
+      ...item,
+      subtasks: item.subtasks ? cloneTree(item.subtasks) : undefined
+    }));
+  };
+  const updatedTasks = cloneTree(tasks);
+  
+  // Build map of all tasks for quick access
+  const taskMap = new Map<string | number, GanttTask>();
+  const buildMap = (items: GanttTask[]) => {
+    items.forEach(item => {
+      taskMap.set(item.id, item);
+      if (item.subtasks) buildMap(item.subtasks);
+    });
+  };
+  buildMap(updatedTasks);
+  
+  // Build adjacency list for dependencies
+  const outEdges = new Map<string | number, any[]>();
+  dependencies.forEach(dep => {
+    const edges = outEdges.get(dep.from) || [];
+    edges.push(dep);
+    outEdges.set(dep.from, edges);
+  });
+  
+  // Queue for BFS
+  const queue: (string | number)[] = [changedTaskId];
+  const processed = new Set<string | number>();
+  
+  while (queue.length > 0) {
+    const currentId = queue.shift()!;
+    if (processed.has(currentId)) continue;
+    processed.add(currentId);
+    
+    const currentTask = taskMap.get(currentId);
+    if (!currentTask) continue;
+    
+    const edges = outEdges.get(currentId) || [];
+    
+    edges.forEach(dep => {
+      const nextTask = taskMap.get(dep.to);
+      if (!nextTask || nextTask.isLocked) return; // Don't move locked tasks
+      
+      // Calculate new start date based on dependency type
+      let newStartDate = new Date(nextTask.start || nextTask.startDate);
+      const currentStart = new Date(currentTask.start || currentTask.startDate);
+      const currentEnd = new Date(currentTask.end || currentTask.endDate);
+      
+      let shouldUpdate = false;
+      
+      if (dep.type === 'FS') { // Finish to Start
+        if (newStartDate < currentEnd) {
+          newStartDate = getNextWorkingDay(addDays(currentEnd, 1), holidays, showWeekends);
+          shouldUpdate = true;
+        }
+      } else if (dep.type === 'SS') { // Start to Start
+        if (newStartDate < currentStart) {
+          newStartDate = getNextWorkingDay(currentStart, holidays, showWeekends);
+          shouldUpdate = true;
+        }
+      } else if (dep.type === 'FF') { // Finish to Finish
+        // Complex: implies end date constraint, simplified here to start date push
+      }
+      
+      if (shouldUpdate) {
+        const duration = differenceInDays(
+          new Date(nextTask.end || nextTask.endDate),
+          new Date(nextTask.start || nextTask.startDate)
+        );
+        
+        const newEndDate = addDays(newStartDate, duration);
+        
+        // Update task
+        nextTask.start = newStartDate.toISOString();
+        nextTask.end = newEndDate.toISOString();
+        if ('startDate' in nextTask) nextTask.startDate = nextTask.start;
+        if ('endDate' in nextTask) nextTask.endDate = nextTask.end;
+        
+        // Add to queue to propagate changes
+        queue.push(nextTask.id);
+      }
+    });
+  }
+  
+  return updatedTasks;
 };
 

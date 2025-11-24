@@ -1,6 +1,22 @@
 export { GanttChart } from './components/GanttChart'
+export { GanttContainer } from './components/GanttContainer'
 export { TaskModal } from './components/TaskModal'
-export type { GanttChartProps, TaskType, Task, ViewMode, TimelineUnit, GanttTask, GanttConfig, TaskColorPalette, ColorPaletteName, FlattenedTask } from './types'
+export { DependencyLines } from './components/DependencyLines'
+export type { 
+  GanttChartProps, 
+  TaskType, 
+  Task, 
+  ViewMode, 
+  TimelineUnit, 
+  GanttTask, 
+  GanttConfig, 
+  TaskColorPalette, 
+  ColorPaletteName, 
+  FlattenedTask,
+  TaskDependency,
+  DependencyType,
+  TaskStatus
+} from './types'
 export { 
   transformToGanttTasks, 
   transformFromGanttTask,
@@ -10,6 +26,8 @@ export {
   findTaskById,
   updateTaskInHierarchy,
   addSubtask,
-  getIndentation
+  getIndentation,
+  calculateCriticalPath,
+  generateTimeline
 } from './utils'
 export { COLOR_PALETTES, getPaletteColor, getProgressColor } from './colorPalettes'
