@@ -3,6 +3,7 @@ import { Box, Paper } from '@mui/material';
 import { GanttHeader } from './GanttHeader';
 import { TimelineGrid } from './TimelineGrid';
 import { TaskListSidebar } from './TaskListSidebar';
+import { TimeCostSummary } from './TimeCostSummary';
 
 export interface GanttContainerProps {
   height?: number | string;
@@ -20,6 +21,7 @@ export const GanttContainer: React.FC<GanttContainerProps> = ({ height = 480 }) 
         overflow: 'hidden',
       }}
     >
+      <TimeCostSummary />
       <GanttHeader />
       <Box
         sx={{

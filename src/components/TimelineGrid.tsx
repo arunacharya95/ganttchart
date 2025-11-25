@@ -2,6 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { useTimeline } from '../hooks/useTimeline';
 import { TaskBars } from './TaskBars';
+import { NewDependencyLines } from './NewDependencyLines';
 
 const COLUMN_MIN_WIDTH = 80;
 
@@ -35,6 +36,7 @@ export const TimelineGrid: React.FC = () => {
           }}
         />
       ))}
+      <NewDependencyLines />
       <TaskBars />
     </Box>
   );

@@ -19,4 +19,5 @@ export declare function useGanttStore<T>(selector: (state: GanttStoreState) => T
 export declare function useGanttStoreActions(): {
     setState: (partial: Partial<GanttStoreState> | ((prev: GanttStoreState) => Partial<GanttStoreState>)) => void;
     getState: () => GanttStoreState;
+    recomputeCriticalPath: () => void;
 };

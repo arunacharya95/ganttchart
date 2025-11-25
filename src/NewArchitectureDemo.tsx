@@ -1,8 +1,8 @@
 import React from 'react';
-import { ThemeProvider, createTheme, CssBaseline, Container, Box, Typography } from '@mui/material';
+import { ThemeProvider, createTheme, CssBaseline, Box, Container, Typography } from '@mui/material';
 import { GanttContainer } from './components/GanttContainer';
 import { getGanttStore } from './state/ganttStore';
-import type { Task } from './types/domain';
+import type { Task, Dependency, Baseline } from './types/domain';
 
 const theme = createTheme({
   palette: {
@@ -33,10 +33,30 @@ if (store.getState().tasks.length === 0) {
     },
   ];
 
-  store.setState(prev => ({
-    ...prev,
-    tasks: sampleTasks,
-  }));
+      const baseline: Baseline = {
+        id: 'b1',
+        name: 'Initial Plan',
+        createdAt: new Date(),
+        taskSnapshots: sampleTasks.map(t => ({
+          taskId: t.id,
+          start: t.start,
+          end: t.end,
+        })),
+      };
+
+      store.setState(prev => ({
+        ...prev,
+        tasks: sampleTasks,
+        dependencies: [
+          {
+            id: 'd1',
+            fromTaskId: '1',
+            toTaskId: '2',
+            type: 'FS',
+          } as Dependency,
+        ],
+        baselines: [baseline],
+      }));
 }
 
 const NewArchitectureDemo: React.FC = () => {

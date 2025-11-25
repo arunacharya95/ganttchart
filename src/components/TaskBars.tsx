@@ -2,7 +2,7 @@ import React, { useMemo, useRef } from 'react';
 import { Box, Tooltip } from '@mui/material';
 import { differenceInCalendarDays } from 'date-fns';
 import { useGanttStore, useGanttStoreActions } from '../state/ganttStore';
-import type { Task, TaskStatus } from '../types/domain';
+import type { Task, TaskStatus, Dependency } from '../types/domain';
 import { useTimeline } from '../hooks/useTimeline';
 import { normalizeDate } from '../utils/dateMath';
 
@@ -24,12 +24,29 @@ const getRowIndex = (task: Task, ordered: Task[]): number => {
 
 export const TaskBars: React.FC = () => {
   const tasks = useGanttStore(state => state.tasks);
+  const baselines = useGanttStore(state => state.baselines);
+  const dependencies = useGanttStore(state => state.dependencies);
   const selectedTaskIds = useGanttStore(state => state.viewState.selectedTaskIds);
-  const { setState } = useGanttStoreActions();
+  const criticalTaskIds = useGanttStore(state => state.viewState.criticalTaskIds ?? []);
+  const showCriticalPath = useGanttStore(state => state.viewState.showCriticalPath);
+  const showBaselines = useGanttStore(state => state.viewState.showBaselines);
+  const statusFilter = useGanttStore(state => state.viewState.statusFilter);
+  const textSearch = useGanttStore(state => state.viewState.textSearch);
+  const { setState, recomputeCriticalPath } = useGanttStoreActions();
   const { visibleStart, visibleEnd, scale } = useTimeline();
 
   const { orderedTasks, totalDays } = useMemo(() => {
-    const ordered = sortTasksForRows(tasks);
+    const filtered = tasks.filter(task => {
+      if (statusFilter && statusFilter.length && task.status && !statusFilter.includes(task.status)) {
+        return false;
+      }
+      if (textSearch && textSearch.trim()) {
+        const q = textSearch.toLowerCase();
+        if (!task.name.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+    const ordered = sortTasksForRows(filtered);
     const days = differenceInCalendarDays(visibleEnd, visibleStart) || 1;
     return { orderedTasks: ordered, totalDays: days };
   }, [tasks, visibleStart, visibleEnd]);
@@ -65,10 +82,120 @@ export const TaskBars: React.FC = () => {
     return days;
   };
 
+  // Recompute critical path whenever tasks or dependencies change
+  React.useEffect(() => {
+    recomputeCriticalPath();
+  }, [tasks, dependencies, recomputeCriticalPath]);
+
   const commitDrag = () => {
     const state = dragStateRef.current;
     if (!state || !state.taskId) return;
+    const movedTaskId = state.taskId;
     dragStateRef.current = null;
+
+    setState(prev => {
+      let tasks = [...prev.tasks];
+      const deps = dependencies ?? [];
+
+      const findTask = (id: string) => tasks.find(t => t.id === id);
+
+      const applyFsRule = (from: Task, to: Task): Task => {
+        if (!from.end || !to.start || !to.end) return to;
+        const fromEnd = normalizeDate(from.end);
+        const toStart = normalizeDate(to.start);
+        const toEnd = normalizeDate(to.end);
+        if (toStart > fromEnd) return to;
+        const duration = Math.max(1, differenceInCalendarDays(toEnd, toStart));
+        const newStart = new Date(fromEnd);
+        newStart.setDate(newStart.getDate() + 1);
+        const newEnd = new Date(newStart);
+        newEnd.setDate(newEnd.getDate() + duration);
+        return { ...to, start: newStart, end: newEnd };
+      };
+
+      const applySsRule = (from: Task, to: Task): Task => {
+        if (!from.start || !to.start || !to.end) return to;
+        const fromStart = normalizeDate(from.start);
+        const toStart = normalizeDate(to.start);
+        const toEnd = normalizeDate(to.end);
+        if (toStart >= fromStart) return to;
+        const duration = Math.max(1, differenceInCalendarDays(toEnd, toStart));
+        const newStart = fromStart;
+        const newEnd = new Date(newStart);
+        newEnd.setDate(newEnd.getDate() + duration);
+        return { ...to, start: newStart, end: newEnd };
+      };
+
+      const applyFfRule = (from: Task, to: Task): Task => {
+        if (!from.end || !to.start || !to.end) return to;
+        const fromEnd = normalizeDate(from.end);
+        const toStart = normalizeDate(to.start);
+        const toEnd = normalizeDate(to.end);
+        if (toEnd >= fromEnd) return to;
+        const duration = Math.max(1, differenceInCalendarDays(toEnd, toStart));
+        const newEnd = fromEnd;
+        const newStart = new Date(newEnd);
+        newStart.setDate(newStart.getDate() - duration);
+        return { ...to, start: newStart, end: newEnd };
+      };
+
+      const applySfRule = (from: Task, to: Task): Task => {
+        if (!from.start || !to.start || !to.end) return to;
+        const fromStart = normalizeDate(from.start);
+        const toStart = normalizeDate(to.start);
+        const toEnd = normalizeDate(to.end);
+        if (toEnd >= fromStart) return to;
+        const duration = Math.max(1, differenceInCalendarDays(toEnd, toStart));
+        const newEnd = fromStart;
+        const newStart = new Date(newEnd);
+        newStart.setDate(newStart.getDate() - duration);
+        return { ...to, start: newStart, end: newEnd };
+      };
+
+      const applyRule = (dep: Dependency, from: Task, to: Task): Task => {
+        switch (dep.type) {
+          case 'FS':
+            return applyFsRule(from, to);
+          case 'SS':
+            return applySsRule(from, to);
+          case 'FF':
+            return applyFfRule(from, to);
+          case 'SF':
+            return applySfRule(from, to);
+          default:
+            return to;
+        }
+      };
+
+      const queue: string[] = [movedTaskId];
+      const visited = new Set<string>();
+
+      while (queue.length) {
+        const currentId = queue.shift()!;
+        if (visited.has(currentId)) continue;
+        visited.add(currentId);
+
+        const currentTask = findTask(currentId);
+        if (!currentTask) continue;
+
+        const outgoing = deps.filter(dep => dep.fromTaskId === currentId);
+        if (!outgoing.length) continue;
+
+        outgoing.forEach(dep => {
+          const toTask = findTask(dep.toTaskId);
+          if (!toTask) return;
+          const updated = applyRule(dep, currentTask, toTask);
+          if (updated === toTask) return;
+          tasks = tasks.map(t => (t.id === updated.id ? updated : t));
+          queue.push(updated.id);
+        });
+      }
+
+      return {
+        ...prev,
+        tasks,
+      };
+    });
   };
 
   React.useEffect(() => {
@@ -142,6 +269,45 @@ export const TaskBars: React.FC = () => {
         pointerEvents: 'none',
       }}
     >
+      {/* Baseline bars */}
+      {showBaselines && baselines.length > 0 && orderedTasks.map(task => {
+        const activeBaseline = baselines[0];
+        const snapshot = activeBaseline.taskSnapshots.find(s => s.taskId === task.id);
+        if (!snapshot) return null;
+
+        const start = normalizeDate(snapshot.start);
+        const end = normalizeDate(snapshot.end);
+
+        const clampedStart = start < visibleStart ? visibleStart : start;
+        const clampedEnd = end > visibleEnd ? visibleEnd : end;
+
+        const offsetDays = differenceInCalendarDays(clampedStart, visibleStart);
+        const durationDays = Math.max(1, differenceInCalendarDays(clampedEnd, clampedStart));
+
+        const left = (offsetDays / totalDays) * totalWidth;
+        const width = (durationDays / totalDays) * totalWidth;
+
+        const rowIndex = getRowIndex(task, orderedTasks);
+        const top = rowIndex * (ROW_HEIGHT + ROW_GAP) + ROW_HEIGHT / 2;
+
+        return (
+          <Box
+            key={`${task.id}-baseline`}
+            sx={{
+              position: 'absolute',
+              left,
+              top,
+              width,
+              height: 4,
+              borderRadius: 2,
+              bgcolor: 'rgba(148,163,184,0.9)',
+              pointerEvents: 'none',
+              transform: 'translateY(-50%)',
+            }}
+          />
+        );
+      })}
+
       {orderedTasks.map(task => {
         if (!task.start || !task.end) return null;
 
@@ -161,7 +327,10 @@ export const TaskBars: React.FC = () => {
         const top = rowIndex * (ROW_HEIGHT + ROW_GAP);
 
         const status = task.status as TaskStatus | undefined;
-        const backgroundColor = status === 'Done'
+        const isCritical = showCriticalPath && criticalTaskIds.includes(task.id);
+        const backgroundColor = isCritical
+          ? '#ef4444'
+          : status === 'Done'
           ? '#10b981'
           : status === 'InProgress'
           ? '#3b82f6'
@@ -207,7 +376,11 @@ export const TaskBars: React.FC = () => {
                 height: ROW_HEIGHT,
                 borderRadius: 1,
                 bgcolor: backgroundColor,
-                border: isSelected ? '2px solid #0ea5e9' : '1px solid rgba(15,23,42,0.25)',
+                border: isSelected
+                  ? '2px solid #0ea5e9'
+                  : isCritical
+                  ? '2px solid rgba(239,68,68,0.9)'
+                  : '1px solid rgba(15,23,42,0.25)',
                 color: '#fff',
                 fontSize: 12,
                 display: 'flex',

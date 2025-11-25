@@ -29,11 +29,14 @@ const buildHierarchy = (tasks: Task[]): TaskWithChildren[] => {
 const renderTaskItems = (
   tasks: TaskWithChildren[],
   selectedTaskIds: string[],
+  criticalTaskIds: string[],
+  showCriticalPath: boolean,
   onSelect: (taskId: string) => void,
   depth = 0,
 ) => {
   return tasks.map(task => {
     const isSelected = selectedTaskIds.includes(task.id);
+    const isCritical = showCriticalPath && criticalTaskIds.includes(task.id);
     return (
       <React.Fragment key={task.id}>
         <ListItem
@@ -48,7 +51,11 @@ const renderTaskItems = (
         <ListItemText
           primary={
             <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="body2" fontWeight={task.parentId ? 400 : 600}>
+              <Typography
+                variant="body2"
+                fontWeight={task.parentId ? 400 : 600}
+                color={isCritical ? 'error.main' : 'inherit'}
+              >
                 {task.name}
               </Typography>
             </Box>
@@ -61,7 +68,7 @@ const renderTaskItems = (
         />
         </ListItem>
         {task.children && task.children.length > 0 &&
-          renderTaskItems(task.children, selectedTaskIds, onSelect, depth + 1)}
+          renderTaskItems(task.children, selectedTaskIds, criticalTaskIds, showCriticalPath, onSelect, depth + 1)}
       </React.Fragment>
     );
   });
@@ -74,9 +81,25 @@ export interface TaskListSidebarProps {
 export const TaskListSidebar: React.FC<TaskListSidebarProps> = ({ width = 260 }) => {
   const tasks = useGanttStore(state => state.tasks);
   const selectedTaskIds = useGanttStore(state => state.viewState.selectedTaskIds);
+  const criticalTaskIds = useGanttStore(state => state.viewState.criticalTaskIds ?? []);
+  const showCriticalPath = useGanttStore(state => state.viewState.showCriticalPath);
+  const statusFilter = useGanttStore(state => state.viewState.statusFilter);
+  const textSearch = useGanttStore(state => state.viewState.textSearch);
   const { setState } = useGanttStoreActions();
 
-  const tree = useMemo(() => buildHierarchy(tasks), [tasks]);
+  const tree = useMemo(() => {
+    const filtered = tasks.filter(task => {
+      if (statusFilter && statusFilter.length && task.status && !statusFilter.includes(task.status)) {
+        return false;
+      }
+      if (textSearch && textSearch.trim()) {
+        const q = textSearch.toLowerCase();
+        if (!task.name.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+    return buildHierarchy(filtered);
+  }, [tasks, statusFilter, textSearch]);
 
   const handleSelect = (taskId: string) => {
     setState(prev => ({
@@ -110,7 +133,7 @@ export const TaskListSidebar: React.FC<TaskListSidebarProps> = ({ width = 260 })
             <ListItemText primary={<Typography variant="body2" color="text.secondary">No tasks</Typography>} />
           </ListItem>
         ) : (
-          renderTaskItems(tree, selectedTaskIds, handleSelect)
+          renderTaskItems(tree, selectedTaskIds, criticalTaskIds, showCriticalPath, handleSelect)
         )}
       </List>
     </Box>

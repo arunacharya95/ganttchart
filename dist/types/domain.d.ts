@@ -136,6 +136,7 @@ export interface GanttViewState {
     selectedTaskIds: string[];
     selectedDependencyIds: string[];
     hoveredTaskId?: string;
+    criticalTaskIds?: string[];
     assigneeFilterIds?: ResourceId[];
     statusFilter?: TaskStatus[];
     tagFilter?: string[];
